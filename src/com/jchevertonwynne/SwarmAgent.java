@@ -1,11 +1,13 @@
 package com.jchevertonwynne;
 
 import com.jchevertonwynne.structures.AStarOption;
+import com.jchevertonwynne.structures.CircleOperations;
 import com.jchevertonwynne.structures.Coord;
 import com.jchevertonwynne.structures.Move;
 import com.jchevertonwynne.structures.MoveHistory;
 
 import java.awt.Color;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -20,9 +22,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.jchevertonwynne.structures.AStarOption.aStarOptionComparator;
-import static com.jchevertonwynne.structures.CircleOperations.angleBetween;
-import static com.jchevertonwynne.structures.CircleOperations.calcCircle;
-import static com.jchevertonwynne.structures.CircleOperations.mostSimilarAngle;
 import static com.jchevertonwynne.structures.Common.SIGHT_RADIUS;
 import static java.lang.Math.abs;
 import static java.lang.StrictMath.pow;
@@ -34,6 +33,9 @@ public class SwarmAgent {
     private List<Coord> currentPath;
     private Scanner scanner;
     private int scansDone;
+    private List<Coord> newlyDone;
+    private Coord lastScanLocation;
+    private Coord recentScanLocation;
 
     public SwarmAgent(Coord position, Color color, Scanner scanner) {
         this.position = position;
@@ -43,15 +45,31 @@ public class SwarmAgent {
         world.put(position, true);
         currentPath = new LinkedList<>();
         scansDone = 0;
+        newlyDone = new LinkedList<>();
+        lastScanLocation = position;
+        recentScanLocation = position;
     }
 
-    public SwarmAgent(Coord position, Color color, Map<Coord, Boolean> world, List<Coord> currentPath, Scanner scanner, int scansDone) {
+    public SwarmAgent(
+            Coord position,
+            Color color,
+            Map<Coord, Boolean> world,
+            List<Coord> currentPath,
+            Scanner scanner,
+            int scansDone,
+            List<Coord> newlyDone,
+            Coord lastScanLocation,
+            Coord recentScanLocation
+    ) {
         this.position = position;
         this.color = color;
         this.world = world;
         this.currentPath = currentPath;
         this.scanner = scanner;
         this.scansDone = scansDone;
+        this.newlyDone = newlyDone;
+        this.lastScanLocation = lastScanLocation;
+        this.recentScanLocation = recentScanLocation;
     }
 
     public Coord getPosition() {
@@ -66,23 +84,15 @@ public class SwarmAgent {
         return color;
     }
 
-    public void setColor(Color color) {
-        this.color = color;
-    }
-
     public Map<Coord, Boolean> getWorld() {
         return world;
-    }
-
-    public void setWorld(Map<Coord, Boolean> world) {
-        this.world = world;
     }
 
     public List<Coord> getCurrentPath() {
         return currentPath;
     }
 
-    public void setCurrentPath(List<Coord> currentPath) {
+    private void setCurrentPath(List<Coord> currentPath) {
         this.currentPath = currentPath;
     }
 
@@ -90,8 +100,8 @@ public class SwarmAgent {
         return scansDone;
     }
 
-    public void setScansDone(int scansDone) {
-        this.scansDone = scansDone;
+    public Coord getLastScanLocation() {
+        return lastScanLocation;
     }
 
     public SwarmAgent copy() {
@@ -101,10 +111,17 @@ public class SwarmAgent {
                 new HashMap<>(world),
                 new LinkedList<>(currentPath),
                 scanner,
-                scansDone
+                scansDone,
+                newlyDone,
+                lastScanLocation,
+                recentScanLocation
         );
     }
 
+    /**
+     * Advance an agent to its next state and return a new instance
+     * @return SwarmAgent
+     */
     public SwarmAgent nextMove() {
         SwarmAgent result = copy();
         if (result.getCurrentPath().size() > 0) {
@@ -115,22 +132,33 @@ public class SwarmAgent {
             List<Move> availableTiles = result.findAvailable();
             availableTiles.sort(Comparator.comparingDouble(this::evaluateGoodness));
             Coord chosen = availableTiles.get(availableTiles.size() - 1).getTile();
-            result.setCurrentPath(calculatePath(chosen));
+            result.setCurrentPath(result.calculatePath(chosen));
             if (result.getCurrentPath() == null) {
+                System.out.println("going back to start...");
                 result.setCurrentPath(result.calculatePath(new Coord(780, 780)));
             }
+            System.out.printf("new path of length %d\n", result.getCurrentPath().size());
         }
         return result;
     }
 
-    public double evaluateGoodness(Move move) {
+    /**
+     * Measure of how 'good' a potential move is for ranking purposes
+     * @param move Distance-Coord pair
+     * @return double Arbitrary score number of goodness
+     */
+    private double evaluateGoodness(Move move) {
         if (move.getDistance() <= 1) {
             return 1000;
         }
-        return getPotentialNewVisible(move.getTile()).size() / Math.log(move.getDistance());
+        return getPotentialNewVisible(move.getTile()) / pow(move.getDistance(), 2);
     }
 
-    public List<Move> findAvailable() {
+    /**
+     * Calculate all edge tiles on current agent's world knowledge
+     * @return List of first <= ~200 boundary tiles
+     */
+    private List<Move> findAvailable() {
         final int MAX_RESULTS = 200;
         List<MoveHistory> toCheck = new LinkedList<>();
         toCheck.add(new MoveHistory(null, position));
@@ -174,50 +202,60 @@ public class SwarmAgent {
         return result;
     }
 
-    public Set<Coord> getPotentialNewVisible(Coord coord) {
-        Set<Coord> result = new HashSet<>();
-        calcAllVisible(coord, SIGHT_RADIUS).forEach(tile -> {
+    /**
+     * Calculate how many new tiles may be discovered from new position
+     * @param coord Position to look for new
+     * @return
+     */
+    private int getPotentialNewVisible(Coord coord) {
+        int result = 0;
+        for (Coord tile : calcAllPotentiallyVisible(coord, SIGHT_RADIUS)) {
             if (!world.containsKey(tile)) {
-                result.add(tile);
+                result++;
             }
-        });
+        }
         return result;
     }
 
-    public List<Coord> calcAllVisible(Coord centre, int n) {
-        Set<Coord> circleEdges = calcCircle(centre, n);
-        int sx = centre.getX();
-        int sy = centre.getY();
-        HashSet<Coord> allVisible = new HashSet<>();
 
-        circleEdges.forEach(edge -> {
-            int ex = edge.getX();
-            int ey = edge.getY();
+    /**
+     * Perform a maximal estimate scan, stopping at walls already discovered
+     * @param centre Centre to discover around
+     * @param n Radius to 'scan' in
+     * @return All real and potential tiles
+     */
+    private List<Coord> calcAllPotentiallyVisible(Coord centre, int n) {
+        List<List<Coord>> rays = CircleOperations.getCircleRays(centre, n);
+        Set<Coord> result = new HashSet<>();
 
-            double targetAngle = angleBetween(centre, edge);
-
-            int dx = Integer.compare(ex - sx, 0);
-            int dy = Integer.compare(ey - sy, 0);
-
-            Coord current = centre;
-            while (current.equals(new Coord(ex, ey)) && world.getOrDefault(current, false)) {
-                int cx = current.getX();
-                int cy = current.getY();
-                Coord a = dx != 0 ? new Coord(cx + dx, cy) : null;
-                Coord b = dy != 0 ? new Coord(cx, cy + dy) : null;
-                current = mostSimilarAngle(a, b, edge, targetAngle);
-                allVisible.add(current);
+        for (List<Coord> ray : rays) {
+            for (Coord coord : ray) {
+                if (!world.getOrDefault(coord, true)) {
+                    break;
+                }
+                result.add(coord);
             }
-        });
-        return new LinkedList<>(allVisible);
+        }
+
+        return new ArrayList<>(result);
     }
 
+    /**
+     * Scan area, increase scan counter and store previous positions
+     */
     public void scanArea() {
         scansDone++;
         scanner.scan(this);
+        lastScanLocation = recentScanLocation;
+        recentScanLocation = position;
     }
 
-    public List<Coord> calculatePath(Coord destination) {
+    /**
+     * A* to path from current position to destination
+     * @param destination Goal coordinate
+     * @return Path to destination, or null
+     */
+    private List<Coord> calculatePath(Coord destination) {
         Set<Coord> seen = new HashSet<>();
         seen.add(position);
 
@@ -244,7 +282,13 @@ public class SwarmAgent {
         return null;
     }
 
-    public List<AStarOption> evaluateChoices(AStarOption aStarOption, Coord goal) {
+    /**
+     * From a tile, find all not checked neighbour tiles
+     * @param aStarOption Current A* state
+     * @param goal Destination
+     * @return Unchecked neighbour A* states
+     */
+    private List<AStarOption> evaluateChoices(AStarOption aStarOption, Coord goal) {
         List<AStarOption> result = new LinkedList<>();
         int currDist = aStarOption.getActualDistance();
         Coord currTile = aStarOption.getTile();
@@ -265,16 +309,26 @@ public class SwarmAgent {
                 newHistory.add(nextCoord);
                 result.add(new AStarOption(distance(nextCoord, goal), currDist + 1, nextCoord, newHistory));
             }
-
         });
         return result;
     }
 
-    public static double distance(Coord a, Coord b) {
+    /**
+     * Distance underestimate for A*
+     * @param a Coordinate
+     * @param b Coordinate
+     * @return Euclidian distance between coordinates
+     */
+    private static double distance(Coord a, Coord b) {
         return pow(pow(abs(a.getX() - b.getX()), 2) + pow(abs(a.getY() - b.getY()), 2), 0.5);
     }
 
-    public static Stream<Coord> getUnvisited(Coord position, Set<Coord> checked) {
+    /**
+     * @param position
+     * @param checked
+     * @return
+     */
+    private static Stream<Coord> getUnvisited(Coord position, Set<Coord> checked) {
         LinkedList<Coord> result = new LinkedList<>();
         int px = position.getX();
         int py = position.getY();
@@ -295,6 +349,20 @@ public class SwarmAgent {
             }
         });
         return result.stream();
+    }
+
+    public void noteNewlyDone(Coord coord) {
+        newlyDone.add(coord);
+    }
+
+    /**
+     * Keeps record of newly discoved tiles so that drawing to screen can be more efficient
+     * @return Tiles discovered since last scan
+     */
+    public List<Coord> getNewlyDone() {
+        List<Coord> result = newlyDone;
+        newlyDone = new LinkedList<>();
+        return result;
     }
 
     @Override

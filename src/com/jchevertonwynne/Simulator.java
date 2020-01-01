@@ -15,6 +15,8 @@ import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static com.jchevertonwynne.structures.Common.BACKGROUND_NAME;
+
 public class Simulator {
     private Boolean[][] world;
     private Scanner scanner;
@@ -39,6 +41,10 @@ public class Simulator {
         agents.forEach(agent -> scans.put(agent.getColor(), 0));
     }
 
+    /**
+     * Create randomly coloured SwarmAgent
+     * @return SwarmAgent
+     */
     private SwarmAgent randomAgent() {
         Color agentColor = new Color(
                 random.nextInt(256),
@@ -48,12 +54,15 @@ public class Simulator {
         return new SwarmAgent(new Coord(780, 780), agentColor, scanner);
     }
 
+    /**
+     * Load array of pathable terrain from png file
+     * @return Array of pathable terrain
+     */
     private Boolean[][] loadWorld() {
         final int pathColor = new Color(255, 255, 255).getRGB();
-        File imageFile = new File("background2.png");
 
         try {
-            BufferedImage image = ImageIO.read(imageFile);
+            BufferedImage image = ImageIO.read(new File(BACKGROUND_NAME));
             Boolean[][] result = new Boolean[image.getWidth()][image.getHeight()];
 
             for (int x = 0; x < image.getWidth(); x++) {
@@ -70,31 +79,45 @@ public class Simulator {
         }
     }
 
-    public void displayWorld(Graphics graphics) {
+    /**
+     * Draw new discovered area, dots showing agent's paths and lines for history
+     * @param image To draw the display
+     */
+    public void displayWorld(BufferedImage image) {
+        int background = new Color(0, 255, 0).getRGB();
+        int wall = new Color(255, 0, 0).getRGB();
         agents.forEach(swarmAgent -> {
-            swarmAgent.getWorld().forEach((coord, pathable) -> {
-                graphics.setColor(pathable ? new Color(0, 255, 0) : new Color(255, 0, 0));
-                graphics.drawLine(coord.getX(), coord.getY(), coord.getX(), coord.getY());
-                graphics.dispose();
+            Map<Coord, Boolean> world = swarmAgent.getWorld();
+            swarmAgent.getNewlyDone().forEach(coord -> {
+                boolean pathable = world.get(coord);
+                image.setRGB(coord.getX(), coord.getY(), pathable ? background : wall);
             });
         });
+        Graphics graphics = image.getGraphics();
         agents.forEach(swarmAgent -> {
             Coord position = swarmAgent.getPosition();
+            Coord lastPosition = swarmAgent.getLastScanLocation();
+            graphics.setColor(new Color(255, 0, 255));
+            graphics.drawLine(lastPosition.getX(), lastPosition.getY(), position.getX(), position.getY());
             graphics.setColor(swarmAgent.getColor());
             graphics.fillOval(position.getX() - 4, position.getY() - 4, 8, 8);
-            graphics.dispose();
         });
+        graphics.dispose();
     }
 
+    /**
+     * Progress all agents and check for any new scans
+     * @return New scan status
+     */
     public boolean progress() {
         agents = agents.stream().map(SwarmAgent::nextMove).collect(Collectors.toSet());
-
+        boolean scansDone = false;
         for (SwarmAgent agent : agents) {
             if (scans.get(agent.getColor()) != agent.getScansDone()) {
-                return true;
+                scansDone = true;
+                scans.put(agent.getColor(), agent.getScansDone());
             }
         }
-
-        return false;
+        return scansDone;
     }
 }

@@ -4,20 +4,30 @@ import javax.swing.JFrame;
 import java.awt.Container;
 
 public class Main extends JFrame {
+	private Display display;
 
 	public Main() {
-		Display d = new Display();
+		display = new Display();
 		setResizable(true);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		Container contentPane = getContentPane();
-		contentPane.add(d);
+		contentPane.add(display);
 		pack();
-		d.processImage();
-		d.processImage();
+	}
+
+	/**
+	 * Infinitely run simulation and display when a new scan has been done
+	 */
+	public void activate() {
+		while (true) {
+			display.processImage();
+			repaint();
+		}
 	}
 
     public static void main(String[] args) {
 		Main m = new Main();
 		m.setVisible(true);
+		m.activate();
     }
 }

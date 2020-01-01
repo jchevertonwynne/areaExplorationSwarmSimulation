@@ -2,12 +2,10 @@ package com.jchevertonwynne;
 
 import com.jchevertonwynne.structures.Coord;
 
-import java.util.Objects;
-import java.util.Set;
+import java.util.List;
+import java.util.Map;
 
-import static com.jchevertonwynne.structures.CircleOperations.angleBetween;
-import static com.jchevertonwynne.structures.CircleOperations.calcCircle;
-import static com.jchevertonwynne.structures.CircleOperations.mostSimilarAngle;
+import static com.jchevertonwynne.structures.CircleOperations.getCircleRays;
 import static com.jchevertonwynne.structures.Common.SIGHT_RADIUS;
 
 public class Scanner {
@@ -17,39 +15,32 @@ public class Scanner {
         this.world = world;
     }
 
+    /**
+     * Scan the area around an agent, cutting off at walls
+     * @param agent Agent to scan area around
+     */
     public void scan(SwarmAgent agent) {
-        Set<Coord> edges = calcCircle(agent.getPosition(), SIGHT_RADIUS);
-        edges.forEach(edge -> {
+        List<List<Coord>> rays = getCircleRays(agent.getPosition(), SIGHT_RADIUS);
+        Map<Coord, Boolean> agentWorld = agent.getWorld();
+
+        for (List<Coord> ray : rays) {
             boolean edgeSeen = false;
+            for (Coord coord : ray) {
+                int cx = coord.getX();
+                int cy = coord.getY();
+                boolean pathable = this.world[cx][cy];
 
-            Coord pos = agent.getPosition();
-            int cx = pos.getX();
-            int cy = pos.getY();
-
-            int ex = edge.getX();
-            int ey = edge.getY();
-
-            double targetAngle = angleBetween(pos, edge);
-
-            int dx = Integer.compare(ex - cx, 0);
-            int dy = Integer.compare(ey - cy, 0);
-
-            Coord nextCoord = pos;
-            while (!Objects.equals(nextCoord, new Coord(ex, ey))) {
-                cx = nextCoord.getX();
-                cy = nextCoord.getY();
-                boolean pathable = world[cx][cy];
                 if (!pathable) {
                     edgeSeen = true;
                 }
                 else if (edgeSeen) {
                     break;
                 }
-                agent.getWorld().put(new Coord(cx, cy), pathable);
-                Coord a = dx != 0 ? new Coord(cx + dx, cy) : null;
-                Coord b = dy != 0 ? new Coord(cx, cy + dy) : null;
-                nextCoord = mostSimilarAngle(a, b, edge, targetAngle);
+                if (!agentWorld.containsKey(coord)) {
+                    agent.noteNewlyDone(coord);
+                    agentWorld.put(coord, pathable);
+                }
             }
-        });
+        }
     }
 }

@@ -9,12 +9,7 @@ public class AStarOption {
     private Coord tile;
     private List<Coord> history;
 
-    public static Comparator<AStarOption> aStarOptionComparator = new Comparator<AStarOption>() {
-        @Override
-        public int compare(AStarOption a, AStarOption b) {
-            return Double.compare(a.getDistanceEstimate(), b.getDistanceEstimate()) ;
-        }
-    };
+    public static Comparator<AStarOption> aStarOptionComparator = Comparator.comparingDouble(AStarOption::getDistanceEstimate);
 
     public AStarOption(double distanceEstimate, int actualDistance, Coord tile, List<Coord> history) {
         this.distanceEstimate = distanceEstimate;
