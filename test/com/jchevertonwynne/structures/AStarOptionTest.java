@@ -17,7 +17,7 @@ class AStarOptionTest {
         AStarOption biggest = new AStarOption(4, 10, null, null);
 
         List<AStarOption> options = Arrays.asList(biggest, smallest, medium);
-        options.sort(AStarOption.aStarOptionComparator);
+        options.sort(AStarOption.AStarOptionComparator);
 
         assertEquals(options, Arrays.asList(smallest, medium, biggest));
     }

@@ -7,22 +7,16 @@ public class Main extends JFrame {
 	private Display display;
 
 	public Main() {
-		display = new Display();
+		display = new Display(this);
 		setResizable(true);
-		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		setDefaultCloseOperation(EXIT_ON_CLOSE);
 		Container contentPane = getContentPane();
 		contentPane.add(display);
 		pack();
 	}
 
-	/**
-	 * Infinitely run simulation and display when a new scan has been done
-	 */
 	public void activate() {
-		while (true) {
-			display.processImage();
-			repaint();
-		}
+		display.processImage();
 	}
 
     public static void main(String[] args) {

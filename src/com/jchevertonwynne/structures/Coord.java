@@ -1,6 +1,6 @@
 package com.jchevertonwynne.structures;
 
-import java.util.Objects;
+import static java.util.Objects.hash;
 
 public class Coord {
     private int x;
@@ -30,7 +30,7 @@ public class Coord {
 
     @Override
     public int hashCode() {
-        return Objects.hash(x, y);
+        return hash(x, y);
     }
 
     @Override

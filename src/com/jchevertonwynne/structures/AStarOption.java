@@ -9,7 +9,7 @@ public class AStarOption {
     private Coord tile;
     private List<Coord> history;
 
-    public static Comparator<AStarOption> aStarOptionComparator = Comparator.comparingDouble(AStarOption::getDistanceEstimate);
+    public static Comparator<AStarOption> AStarOptionComparator = Comparator.comparingDouble(AStarOption::getDistanceEstimate);
 
     public AStarOption(double distanceEstimate, int actualDistance, Coord tile, List<Coord> history) {
         this.distanceEstimate = distanceEstimate;
