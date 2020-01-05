@@ -28,7 +28,10 @@ public class Coord {
     );
 
     public Coord add(Coord other) {
-        return new Coord(x + other.getX(), y + other.getY());
+        return new Coord(
+                x + other.getX(),
+                y + other.getY()
+        );
     }
 
     public List<Coord> rotations() {
@@ -41,6 +44,8 @@ public class Coord {
     }
 
     public double distance(Coord other) {
-        return pow(pow(abs(x - other.getX()), 2) + pow(abs(y - other.getY()), 2), 0.5);
+        double xSquared = pow(abs(x - other.getX()), 2);
+        double ySquared = pow(abs(y - other.getY()), 2);
+        return pow(xSquared + ySquared, 0.5);
     }
 }
