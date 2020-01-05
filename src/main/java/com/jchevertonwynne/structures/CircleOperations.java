@@ -6,12 +6,14 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
+import static java.lang.Integer.compare;
 import static java.lang.Math.PI;
 import static java.lang.Math.abs;
 import static java.lang.Math.atan2;
 import static java.lang.Math.pow;
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toSet;
 
 public class CircleOperations {
     private static Map<Integer, Set<Coord>> circleEdges = new HashMap<>();
@@ -33,35 +35,23 @@ public class CircleOperations {
                 b--;
             }
         }
-
         return result;
     }
 
     public static Set<Coord> baseCircle(int size) {
         if (!circleEdges.containsKey(size)) {
-            Set<Coord> quarter = calculateArc(size);
-            Set<Coord> edges = new HashSet<>();
-            quarter.forEach(coord -> {
-                int x = coord.getX();
-                int y= coord.getY();
-                edges.add(new Coord(x, y));
-                edges.add(new Coord(-x, y));
-                edges.add(new Coord(x, -y));
-                edges.add(new Coord(-x, -y));
-            });
+            Set<Coord> edges = calculateArc(size).stream()
+                    .flatMap(edgeTile -> edgeTile.rotations().stream())
+                    .collect(toSet());
             circleEdges.put(size, edges);
         }
-
         return circleEdges.get(size);
     }
 
     public static  Set<Coord> calcCircle(Coord centre, int size) {
-        int cx = centre.getX();
-        int cy = centre.getY();
-
         return baseCircle(size).stream()
-                .map(edge -> new Coord(cx + edge.getX(), cy + edge.getY()))
-                .collect(Collectors.toSet());
+                .map(centre::add)
+                .collect(toSet());
     }
 
     public static double angleBetween(Coord a, Coord b) {
@@ -74,8 +64,8 @@ public class CircleOperations {
         Coord start = new Coord(0, 0);
         List<Coord> result = new ArrayList<>();
         double targetAngle = angleBetween(start, end);
-        int dx = Integer.compare(end.getX() - start.getX(), 0);
-        int dy = Integer.compare(end.getY() - start.getY(), 0);
+        int dx = compare(end.getX() - start.getX(), 0);
+        int dy = compare(end.getY() - start.getY(), 0);
 
         Coord current = start;
         while (!current.equals(end)) {
@@ -91,23 +81,23 @@ public class CircleOperations {
 
     public static List<List<Coord>> getCircleRays(Coord centre, int size) {
         if (!circleRays.containsKey(size)) {
-            List<List<Coord>> rays = new ArrayList<>();
-            baseCircle(size).forEach(edge -> rays.add(calculateRay(edge)));
+            List<List<Coord>> rays = baseCircle(size).stream()
+                    .map(CircleOperations::calculateRay)
+                    .collect(toList());
             circleRays.put(size, rays);
         }
-
-        List<List<Coord>> rays = circleRays.get(size);
-        int cx = centre.getX();
-        int cy = centre.getY();
-
-        return rays.stream()
+        return circleRays.get(size).stream()
                 .map(rayLine -> rayLine.stream()
-                        .map(tile -> new Coord(cx + tile.getX(), cy + tile.getY()))
-                        .collect(Collectors.toList()))
-                .collect(Collectors.toList());
+                        .map(rayTile -> rayTile.add(centre))
+                        .collect(toList()))
+                .collect(toList());
     }
 
     public static Coord mostSimilarAngle(Coord a, Coord b, Coord goal, double targetAngle) {
+        if (a == null && b == null) {
+            throw new IllegalArgumentException("Not both coords can be null");
+        }
+
         if (a == null) {
             return b;
         }
@@ -119,24 +109,24 @@ public class CircleOperations {
             return  a;
         }
         else if (b.equals(goal)) {
-            return goal;
+            return b;
         }
 
-        double aa = angleBetween(a, goal);
-        double ba = angleBetween(b, goal);
+        double aToGoal = angleBetween(a, goal);
+        double bToGoal = angleBetween(b, goal);
 
-        double ad = abs(aa - targetAngle);
-        double bd = abs(ba - targetAngle);
+        double aAngleDifference = abs(aToGoal - targetAngle);
+        double bAngleDifference = abs(bToGoal - targetAngle);
 
-        if (ad > PI) {
-            ad = 2 * PI - ad;
+        if (aAngleDifference > PI) {
+            aAngleDifference = 2 * PI - aAngleDifference;
         }
 
-        if (bd > PI) {
-            bd = 2 * PI - bd;
+        if (bAngleDifference > PI) {
+            bAngleDifference = 2 * PI - bAngleDifference;
         }
 
-        return ad < bd ? a : b;
+        return aAngleDifference < bAngleDifference ? a : b;
     }
 }
 

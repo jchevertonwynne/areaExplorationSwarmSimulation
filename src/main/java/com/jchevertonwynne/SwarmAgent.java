@@ -7,23 +7,25 @@ import com.jchevertonwynne.structures.MoveHistory;
 import java.awt.Color;
 import java.awt.geom.IllegalPathStateException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
+import static com.jchevertonwynne.AStarPathing.calculatePath;
 import static com.jchevertonwynne.structures.CircleOperations.getCircleRays;
 import static com.jchevertonwynne.structures.Common.DFS_MAX_TURNS_WITHOUT_FIND;
 import static com.jchevertonwynne.structures.Common.DFS_SOFT_LIST_RETURN_LIMIT;
 import static com.jchevertonwynne.structures.Common.SIGHT_RADIUS;
+import static com.jchevertonwynne.structures.Coord.CARDINAL_DIRECTIONS;
 import static java.lang.Math.pow;
+import static java.util.Objects.hash;
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toSet;
 
 public class SwarmAgent {
     private Coord startPosition;
@@ -111,9 +113,9 @@ public class SwarmAgent {
             Optional<Move> closestMove = availableTiles.stream().max(Comparator.comparingDouble(this::evaluateGoodness));
             closestMove.ifPresentOrElse(move -> {
                 Coord tile = move.getTile();
-                setCurrentPath(AStarPathing.calculatePath(position, tile, world));
+                setCurrentPath(calculatePath(position, tile, world));
                 int potentialDiscovered = getPotentialNewVisible(tile);
-                double smallCutoff = 5 * pow(SIGHT_RADIUS, 2);
+                double smallCutoff = 0.5 * pow(SIGHT_RADIUS, 2);
                 DiscoveryMode m = potentialDiscovered > smallCutoff ? DiscoveryMode.LARGE : DiscoveryMode.SMALL;
                 if (m != discoveryMode) {
                     System.out.printf("Switching mode to %s\n", m.toString());
@@ -122,7 +124,7 @@ public class SwarmAgent {
                 System.out.println(potentialDiscovered);
             }, () -> {
                 System.out.printf("going back to start from coord %s\n", position.toString());
-                setCurrentPath(AStarPathing.calculatePath(position, startPosition, world));
+                setCurrentPath(calculatePath(position, startPosition, world));
             });
         }
     }
@@ -188,7 +190,7 @@ public class SwarmAgent {
                     nextAvailable.addAll(
                             getUnvisited(pos, seen).stream()
                                     .map(newPos -> new MoveHistory(pos, newPos))
-                                    .collect(Collectors.toList())
+                                    .collect(toList())
                     );
                 }
             });
@@ -210,7 +212,7 @@ public class SwarmAgent {
 
             seen.addAll(toCheck.stream()
                     .map(MoveHistory::getCurrentTile)
-                    .collect(Collectors.toSet())
+                    .collect(toSet())
             );
             toCheck = nextToCheck;
         }
@@ -255,19 +257,9 @@ public class SwarmAgent {
      */
     private static List<Coord> getUnvisited(Coord position, Set<Coord> checked) {
         List<Coord> result = new LinkedList<>();
-        int px = position.getX();
-        int py = position.getY();
 
-        List<Coord> options = Arrays.asList(
-                new Coord(1, 0),
-                new Coord(-1, 0),
-                new Coord(0, 1),
-                new Coord(0, -1)
-        );
-        options.forEach(option -> {
-            int dx = option.getX();
-            int dy = option.getY();
-            Coord newPos = new Coord(px + dx, py + dy);
+        CARDINAL_DIRECTIONS.forEach(option -> {
+            Coord newPos = position.add(option);
             if (!checked.contains(newPos)) {
                 checked.add(newPos);
                 result.add(newPos);
@@ -290,6 +282,6 @@ public class SwarmAgent {
 
     @Override
     public int hashCode() {
-        return Objects.hash(color);
+        return hash(color);
     }
 }

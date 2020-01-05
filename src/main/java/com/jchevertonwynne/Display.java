@@ -12,6 +12,7 @@ import java.io.File;
 import java.io.IOException;
 
 import static com.jchevertonwynne.structures.Common.BACKGROUND_NAME;
+import static java.awt.image.BufferedImage.TYPE_INT_RGB;
 import static java.lang.String.format;
 
 public class Display extends JPanel {
@@ -27,7 +28,7 @@ public class Display extends JPanel {
         imagesTaken = 0;
         try {
             BufferedImage im = ImageIO.read(new File(BACKGROUND_NAME));
-            image = new BufferedImage(im.getWidth(), im.getHeight(), BufferedImage.TYPE_INT_RGB);
+            image = new BufferedImage(im.getWidth(), im.getHeight(), TYPE_INT_RGB);
             image.getGraphics().drawImage(im, 0, 0, null);
         }
         catch (IOException e) {
