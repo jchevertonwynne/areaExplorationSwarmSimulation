@@ -1,6 +1,8 @@
 package com.jchevertonwynne;
 
 import com.jchevertonwynne.structures.Coord;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.imageio.ImageIO;
 import java.awt.Color;
@@ -17,6 +19,8 @@ import java.util.Set;
 import static com.jchevertonwynne.structures.Common.BACKGROUND_NAME;
 
 public class Simulator {
+    Logger logger = LoggerFactory.getLogger(Simulator.class);
+
     private Random random;
     private Scanner scanner;
     private Set<SwarmAgent> agents;
@@ -72,7 +76,7 @@ public class Simulator {
             return result;
         }
         catch (IOException e) {
-            System.out.println("lmao");
+            logger.error("Image file {} could not be loaded", BACKGROUND_NAME);
             return null;
         }
     }
@@ -95,9 +99,9 @@ public class Simulator {
         Graphics graphics = image.getGraphics();
         agents.forEach(swarmAgent -> {
             Coord position = swarmAgent.getPosition();
-            swarmAgent.getNewPathTaken().forEach(pathCoord -> image.setRGB(pathCoord.getX(), pathCoord.getY(), path));
             graphics.setColor(swarmAgent.getColor());
             graphics.fillOval(position.getX() - 4, position.getY() - 4, 8, 8);
+            swarmAgent.getNewPathTaken().forEach(pathCoord -> image.setRGB(pathCoord.getX(), pathCoord.getY(), path));
         });
         graphics.dispose();
     }

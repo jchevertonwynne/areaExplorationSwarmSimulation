@@ -8,7 +8,6 @@ import lombok.ToString;
 
 import java.util.List;
 
-import static java.lang.Math.abs;
 import static java.lang.Math.pow;
 import static java.util.Arrays.asList;
 
@@ -44,8 +43,8 @@ public class Coord {
     }
 
     public double distance(Coord other) {
-        double xSquared = pow(abs(x - other.getX()), 2);
-        double ySquared = pow(abs(y - other.getY()), 2);
+        double xSquared = pow(x - other.getX(), 2);
+        double ySquared = pow(y - other.getY(), 2);
         return pow(xSquared + ySquared, 0.5);
     }
 }

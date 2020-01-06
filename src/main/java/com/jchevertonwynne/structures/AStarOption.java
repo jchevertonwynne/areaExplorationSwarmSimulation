@@ -17,5 +17,5 @@ public class AStarOption {
     private final @NonNull Coord tile;
     private final @NonNull List<Coord> history;
 
-    public static Comparator<AStarOption> AStarOptionComparator = comparingDouble(AStarOption::getDistanceEstimate);
+    public static Comparator<AStarOption> AStarOptionComparator = comparingDouble(aStarOption -> aStarOption.actualDistance + aStarOption.distanceEstimate);
 }

@@ -13,6 +13,7 @@ import java.util.Set;
 import static com.jchevertonwynne.structures.AStarOption.AStarOptionComparator;
 import static com.jchevertonwynne.structures.Coord.CARDINAL_DIRECTIONS;
 import static java.lang.String.format;
+import static java.util.stream.Collectors.toList;
 
 public class AStarPathing {
     /**
@@ -29,11 +30,10 @@ public class AStarPathing {
                 start.distance(destination),
                 0,
                 start,
-                new LinkedList<>()
-                ));
+                new LinkedList<>()));
 
         while (!toTry.isEmpty()) {
-            AStarOption nextOption = toTry.remove();
+            AStarOption nextOption = toTry.poll();
             List<AStarOption> nextOptions = evaluateChoices(nextOption, destination, world);
             for (AStarOption aStarOption : nextOptions) {
                 Coord tile = aStarOption.getTile();
@@ -41,13 +41,12 @@ public class AStarPathing {
                     return aStarOption.getHistory();
                 }
             }
-            nextOptions.forEach(option -> {
-                Coord tile = option.getTile();
-                if (!seen.contains(tile)) {
-                    toTry.add(option);
-                    seen.add(tile);
-                }
-            });
+            nextOptions.stream()
+                    .filter(aStarOption -> !seen.contains(aStarOption.getTile()))
+                    .forEach(aStarOption -> {
+                        toTry.add(aStarOption);
+                        seen.add(aStarOption.getTile());
+                    });
         }
         throw new IllegalArgumentException(
                 format(
@@ -65,25 +64,22 @@ public class AStarPathing {
      * @return Unchecked neighbour A* states
      */
     private static List<AStarOption> evaluateChoices(AStarOption aStarOption, Coord goal,  Map<Coord, Boolean> world) {
-        List<AStarOption> result = new LinkedList<>();
         int currDist = aStarOption.getActualDistance();
         Coord currTile = aStarOption.getTile();
+        List<Coord> history = aStarOption.getHistory();
 
-        CARDINAL_DIRECTIONS.forEach(option -> {
-            Coord nextCoord = currTile.add(option);
-            if (world.getOrDefault(nextCoord, false)) {
-                List<Coord> newHistory = new LinkedList<>(aStarOption.getHistory());
-                newHistory.add(nextCoord);
-                result.add(
-                        new AStarOption(
-                                currDist + nextCoord.distance(goal),
-                                currDist + 1,
-                                nextCoord,
-                                newHistory
-                        )
-                );
-            }
-        });
-        return result;
+        return CARDINAL_DIRECTIONS.stream()
+                .map(currTile::add)
+                .filter(coord -> world.getOrDefault(coord, false))
+                .map(coord -> {
+                    List<Coord> newHistory = new LinkedList<>(history);
+                    newHistory.add(coord);
+                    return new AStarOption(
+                            coord.distance(goal),
+                            currDist + 1,
+                            coord,
+                            newHistory
+                    );
+                }).collect(toList());
     }
 }

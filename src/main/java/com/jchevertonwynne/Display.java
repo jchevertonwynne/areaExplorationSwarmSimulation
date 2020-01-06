@@ -1,5 +1,8 @@
 package com.jchevertonwynne;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
@@ -16,6 +19,8 @@ import static java.awt.image.BufferedImage.TYPE_INT_RGB;
 import static java.lang.String.format;
 
 public class Display extends JPanel {
+    Logger logger = LoggerFactory.getLogger(Display.class);
+
     private JFrame frame;
     private BufferedImage image;
     private Simulator simulator;
@@ -32,7 +37,7 @@ public class Display extends JPanel {
             image.getGraphics().drawImage(im, 0, 0, null);
         }
         catch (IOException e) {
-            System.out.printf("Background image %s not found\n", BACKGROUND_NAME);
+            logger.error("Background image {} not found\n", BACKGROUND_NAME);
         }
 
         add(new JLabel(new ImageIcon(image)));
@@ -44,24 +49,16 @@ public class Display extends JPanel {
             }
 
             @Override
-            public void mousePressed(MouseEvent mouseEvent) {
-
-            }
+            public void mousePressed(MouseEvent mouseEvent) { }
 
             @Override
-            public void mouseReleased(MouseEvent mouseEvent) {
-
-            }
+            public void mouseReleased(MouseEvent mouseEvent) { }
 
             @Override
-            public void mouseEntered(MouseEvent mouseEvent) {
-
-            }
+            public void mouseEntered(MouseEvent mouseEvent) { }
 
             @Override
-            public void mouseExited(MouseEvent mouseEvent) {
-
-            }
+            public void mouseExited(MouseEvent mouseEvent) { }
         });
     }
 
@@ -69,6 +66,7 @@ public class Display extends JPanel {
      * Run simulation until a scan has been done, then display the update
      */
     public void processImage() {
+        logger.info("Commencing exploration of {}", BACKGROUND_NAME);
         while (!simulator.complete()) {
             boolean change = false;
             while (!change) {
@@ -83,7 +81,7 @@ public class Display extends JPanel {
         simulator.displayWorld(image);
         frame.repaint();
         saveImage();
-        System.out.println("Simulation finished!");
+        logger.info("Simulation finished!");
     }
 
     private void saveImage() {
@@ -92,7 +90,7 @@ public class Display extends JPanel {
                 : new File(format("imageOutput/output%04d.png", imagesTaken));
         try {
             ImageIO.write(image, "png", output);
-            System.out.printf("%s saved\n", output.getName());
+            logger.info("Image {} saved", output.getName());
             if (!simulator.complete()) {
                 imagesTaken++;
             }

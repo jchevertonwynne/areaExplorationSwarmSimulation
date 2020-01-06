@@ -2,32 +2,35 @@ package com.jchevertonwynne;
 
 import com.jchevertonwynne.structures.Coord;
 import com.jchevertonwynne.structures.Move;
-import com.jchevertonwynne.structures.MoveHistory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.awt.Color;
 import java.awt.geom.IllegalPathStateException;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+import java.util.PriorityQueue;
+import java.util.Random;
 import java.util.Set;
 
 import static com.jchevertonwynne.AStarPathing.calculatePath;
+import static com.jchevertonwynne.BoundarySearch.findAvailable;
 import static com.jchevertonwynne.structures.CircleOperations.getCircleRays;
-import static com.jchevertonwynne.structures.Common.DFS_MAX_TURNS_WITHOUT_FIND;
-import static com.jchevertonwynne.structures.Common.DFS_SOFT_LIST_RETURN_LIMIT;
+import static com.jchevertonwynne.structures.Common.RANDOM_BEST_SELECT_LIMIT;
 import static com.jchevertonwynne.structures.Common.SIGHT_RADIUS;
-import static com.jchevertonwynne.structures.Coord.CARDINAL_DIRECTIONS;
+import static java.lang.Math.log;
+import static java.lang.Math.min;
 import static java.lang.Math.pow;
+import static java.util.Comparator.comparingDouble;
 import static java.util.Objects.hash;
-import static java.util.stream.Collectors.toList;
-import static java.util.stream.Collectors.toSet;
 
 public class SwarmAgent {
+    Logger logger = LoggerFactory.getLogger(SwarmAgent.class);
+
     private Coord startPosition;
     private Coord position;
     private Color color;
@@ -52,6 +55,8 @@ public class SwarmAgent {
         this.scanner = scanner;
         world.put(position, true);
         startPosition = position;
+
+        logger.debug("Initialising agent {} at {}", color.getRGB(), position.toString());
     }
 
     public Coord getPosition() {
@@ -99,33 +104,45 @@ public class SwarmAgent {
     }
 
     public void calculateNextMove() {
-        if (finished) {
-            return;
-        }
-        if (getCurrentPath().size() == 0) {
+        if (!finished && getCurrentPath().size() == 0) {
             if (position.equals(startPosition) && turns != 0) {
                 finished = true;
-                System.out.println("Agent has returned to start position!");
-                return;
+                logger.info("Agent {} returned to start {}", color.getRGB(),  position.toString());
             }
-            scanArea();
-            List<Move> availableTiles = findAvailable();
-            Optional<Move> closestMove = availableTiles.stream().max(Comparator.comparingDouble(this::evaluateGoodness));
-            closestMove.ifPresentOrElse(move -> {
-                Coord tile = move.getTile();
-                setCurrentPath(calculatePath(position, tile, world));
-                int potentialDiscovered = getPotentialNewVisible(tile);
-                double smallCutoff = 0.5 * pow(SIGHT_RADIUS, 2);
-                DiscoveryMode m = potentialDiscovered > smallCutoff ? DiscoveryMode.LARGE : DiscoveryMode.SMALL;
-                if (m != discoveryMode) {
-                    System.out.printf("Switching mode to %s\n", m.toString());
+            else {
+                logger.info("Agent {} scanning at {}", color.getRGB(),  position.toString());
+                scanArea();
+                logger.info("Agent {} scanned and discovered {} coords", color.getRGB(), newlyDone.size());
+                PriorityQueue<Move> pq = new PriorityQueue<>(comparingDouble(this::evaluateGoodness));
+                pq.addAll(findAvailable(position, world));
+
+                if (pq.size() == 0) {
+                    logger.info("Agent {} going back to start {} from {}", color.getRGB(),  startPosition.toString(), position.toString());
+                    setCurrentPath(calculatePath(position, startPosition, world));
                 }
-                discoveryMode = m;
-                System.out.println(potentialDiscovered);
-            }, () -> {
-                System.out.printf("going back to start from coord %s\n", position.toString());
-                setCurrentPath(calculatePath(position, startPosition, world));
-            });
+                else {
+                    int choices = min(RANDOM_BEST_SELECT_LIMIT, pq.size());
+                    List<Move> moveOptions = new ArrayList<>(RANDOM_BEST_SELECT_LIMIT);
+                    for (int i = 0; i < choices; i++) {
+                        moveOptions.add(pq.poll());
+                    }
+
+                    Coord tile = moveOptions.get(new Random().nextInt(choices)).getTile();
+                    logger.info("Agent {} now moving to {}", color.getRGB(), tile.toString());
+
+                    setCurrentPath(calculatePath(position, tile, world));
+                    int potentialDiscovered = getPotentialNewVisible(tile);
+                    logger.info("Agent {} potentially discovering {} coords", color.getRGB(), potentialDiscovered);
+                    double smallCutoff = 0.5 * pow(SIGHT_RADIUS, 2);
+                    DiscoveryMode m = potentialDiscovered > smallCutoff ? DiscoveryMode.LARGE : DiscoveryMode.SMALL;
+                    if (m != discoveryMode) {
+                        logger.info("Agent {} switching to mode {}", color.getRGB(), m.toString());
+                    }
+                    discoveryMode = m;
+
+                }
+            }
+            turns++;
         }
     }
 
@@ -133,7 +150,6 @@ public class SwarmAgent {
         if (!finished) {
             newPathTaken.add(position);
             position = getCurrentPath().remove(0);
-            turns++;
         }
     }
 
@@ -151,72 +167,13 @@ public class SwarmAgent {
     }
 
     private  double smallDiscovery(Move move) {
-        return - move.getDistance();
+        return move.getDistance();
     }
 
     private double largeDiscovery(Move move) {
         int discoverable = getPotentialNewVisible(move.getTile());
         double distance = move.getDistance();
-        return discoverable / pow(distance, 2);
-    }
-
-    /**
-     * Calculate all edge tiles on current agent's world knowledge
-     * @return List of first <= ~400 boundary tiles
-     */
-    private List<Move> findAvailable() {
-        List<MoveHistory> toCheck = new LinkedList<>();
-        toCheck.add(new MoveHistory(null, position));
-
-        Set<Coord> seen = new HashSet<>();
-        seen.add(position);
-
-        int distance = 0;
-        List<Move> result = new LinkedList<>();
-        Set<Coord> resultTiles = new HashSet<>();
-
-        int turnsWithoutFind = 0;
-
-        while (!toCheck.isEmpty() && result.size() < DFS_SOFT_LIST_RETURN_LIMIT) {
-            if (!result.isEmpty() && turnsWithoutFind > DFS_MAX_TURNS_WITHOUT_FIND) {
-                return result;
-            }
-            distance++;
-            turnsWithoutFind++;
-            List<MoveHistory> nextAvailable = new LinkedList<>();
-            toCheck.forEach(move -> {
-                Coord pos = move.getCurrentTile();
-                if (world.getOrDefault(pos, false)) {
-                    nextAvailable.addAll(
-                            getUnvisited(pos, seen).stream()
-                                    .map(newPos -> new MoveHistory(pos, newPos))
-                                    .collect(toList())
-                    );
-                }
-            });
-            List<MoveHistory> nextToCheck = new LinkedList<>();
-            int finalDistance = distance;
-            for (MoveHistory nextPair : nextAvailable) {
-                Coord previousTile = nextPair.getLastTile();
-                Coord possibleTile = nextPair.getCurrentTile();
-                if (!world.containsKey(possibleTile)) {
-                    if (!resultTiles.contains(previousTile)) {
-                        result.add(new Move(previousTile, finalDistance));
-                        resultTiles.add(previousTile);
-                        turnsWithoutFind = 0;
-                    }
-                } else {
-                    nextToCheck.add(new MoveHistory(previousTile, possibleTile));
-                }
-            }
-
-            seen.addAll(toCheck.stream()
-                    .map(MoveHistory::getCurrentTile)
-                    .collect(toSet())
-            );
-            toCheck = nextToCheck;
-        }
-        return result;
+        return - (discoverable / log(distance));
     }
 
     /**
@@ -248,24 +205,6 @@ public class SwarmAgent {
     private void scanArea() {
         scansDone++;
         scanner.scan(this);
-    }
-
-    /**
-     * @param position Position to check surrounding tiles
-     * @param checked Coords that have already been considered
-     * @return Unconsidered neighbour tiles
-     */
-    private static List<Coord> getUnvisited(Coord position, Set<Coord> checked) {
-        List<Coord> result = new LinkedList<>();
-
-        CARDINAL_DIRECTIONS.forEach(option -> {
-            Coord newPos = position.add(option);
-            if (!checked.contains(newPos)) {
-                checked.add(newPos);
-                result.add(newPos);
-            }
-        });
-        return result;
     }
 
     public void noteNewlyDone(Coord coord) {
