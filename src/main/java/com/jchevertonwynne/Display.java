@@ -1,5 +1,6 @@
 package com.jchevertonwynne;
 
+import com.jchevertonwynne.simulation.Simulator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -8,13 +9,11 @@ import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 
-import static com.jchevertonwynne.structures.Common.BACKGROUND_NAME;
+import static com.jchevertonwynne.Common.BACKGROUND_NAME;
 import static java.awt.image.BufferedImage.TYPE_INT_RGB;
 import static java.lang.String.format;
 
@@ -29,37 +28,18 @@ public class Display extends JPanel {
 
     public Display(JFrame frame) {
         this.frame = frame;
-        simulator = new Simulator(1);
         imagesTaken = 0;
         try {
             BufferedImage im = ImageIO.read(new File(BACKGROUND_NAME));
             image = new BufferedImage(im.getWidth(), im.getHeight(), TYPE_INT_RGB);
             image.getGraphics().drawImage(im, 0, 0, null);
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             logger.error("Background image {} not found\n", BACKGROUND_NAME);
         }
+        simulator = new Simulator(1, image);
 
         add(new JLabel(new ImageIcon(image)));
-
-        addMouseListener(new MouseListener() {
-            @Override
-            public void mouseClicked(MouseEvent mouseEvent) {
-                saveImage();
-            }
-
-            @Override
-            public void mousePressed(MouseEvent mouseEvent) { }
-
-            @Override
-            public void mouseReleased(MouseEvent mouseEvent) { }
-
-            @Override
-            public void mouseEntered(MouseEvent mouseEvent) { }
-
-            @Override
-            public void mouseExited(MouseEvent mouseEvent) { }
-        });
+        addMouseListener(new DisplayClickListener(this));
     }
 
     /**
@@ -84,7 +64,7 @@ public class Display extends JPanel {
         logger.info("Simulation finished!");
     }
 
-    private void saveImage() {
+    public void saveImage() {
         File output = simulator.complete()
                 ? new File("imageOutput/finished.png")
                 : new File(format("imageOutput/output%04d.png", imagesTaken));

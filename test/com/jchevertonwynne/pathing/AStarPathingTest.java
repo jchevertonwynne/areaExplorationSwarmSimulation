@@ -1,4 +1,4 @@
-package com.jchevertonwynne;
+package com.jchevertonwynne.pathing;
 
 import com.jchevertonwynne.structures.Coord;
 import org.junit.jupiter.api.Test;

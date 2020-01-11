@@ -1,34 +1,28 @@
-package com.jchevertonwynne;
+package com.jchevertonwynne.simulation;
 
 import com.jchevertonwynne.structures.Coord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.imageio.ImageIO;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
-import static com.jchevertonwynne.structures.Common.BACKGROUND_NAME;
-
 public class Simulator {
     Logger logger = LoggerFactory.getLogger(Simulator.class);
 
-    private Random random;
     private Scanner scanner;
     private Set<SwarmAgent> agents;
     private Map<Color, Integer> scans;
 
-    public Simulator(int agentCount) {
-        Boolean[][] world = loadWorld();
-        random = new Random();
+    public Simulator(int agentCount, BufferedImage image) {
+        Boolean[][] world = loadWorld(image);
+
         scanner = new Scanner(world);
         agents = new HashSet<>();
         scans = new HashMap<>();
@@ -48,6 +42,7 @@ public class Simulator {
      * @return SwarmAgent
      */
     private SwarmAgent randomAgent() {
+        Random random = new Random();
         Color agentColor = new Color(
                 random.nextInt(256),
                 random.nextInt(256),
@@ -60,25 +55,17 @@ public class Simulator {
      * Load array of pathable terrain from png file
      * @return Array of pathable terrain
      */
-    private Boolean[][] loadWorld() {
-        final int pathColor = new Color(255, 255, 255).getRGB();
+    private Boolean[][] loadWorld(BufferedImage image) {
+        int pathColor = new Color(255, 255, 255).getRGB();
+        Boolean[][] result = new Boolean[image.getWidth()][image.getHeight()];
 
-        try {
-            BufferedImage image = ImageIO.read(new File(BACKGROUND_NAME));
-            Boolean[][] result = new Boolean[image.getWidth()][image.getHeight()];
-
-            for (int x = 0; x < image.getWidth(); x++) {
-                for (int y = 0; y < image.getHeight(); y++) {
-                    result[x][y] = image.getRGB(x, y) == pathColor;
-                }
+        for (int x = 0; x < image.getWidth(); x++) {
+            for (int y = 0; y < image.getHeight(); y++) {
+                result[x][y] = image.getRGB(x, y) == pathColor;
             }
+        }
 
-            return result;
-        }
-        catch (IOException e) {
-            logger.error("Image file {} could not be loaded", BACKGROUND_NAME);
-            return null;
-        }
+        return result;
     }
 
     /**

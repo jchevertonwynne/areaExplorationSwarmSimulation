@@ -1,4 +1,6 @@
-package com.jchevertonwynne.structures;
+package com.jchevertonwynne;
+
+import com.jchevertonwynne.structures.Coord;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -19,7 +21,11 @@ public class CircleOperations {
     private static Map<Integer, Set<Coord>> circleEdges = new HashMap<>();
     private static Map<Integer, List<List<Coord>>> circleRays = new HashMap<>();
 
-    public static Set<Coord> calculateArc(int size) {
+    private CircleOperations() {
+        throw new UnsupportedOperationException("This is a utility class and cannot be instantiated");
+    }
+
+    private static Set<Coord> calculateArc(int size) {
         Set<Coord> result = new HashSet<>();
         int a = 0;
         int b = size;
@@ -38,17 +44,14 @@ public class CircleOperations {
         return result;
     }
 
-    public static Set<Coord> baseCircle(int size) {
-        if (!circleEdges.containsKey(size)) {
-            Set<Coord> edges = calculateArc(size).stream()
-                    .flatMap(edgeTile -> edgeTile.rotations().stream())
-                    .collect(toSet());
-            circleEdges.put(size, edges);
-        }
+    private static Set<Coord> baseCircle(int size) {
+        circleEdges.computeIfAbsent(size, radius -> calculateArc(size).stream()
+                .flatMap(edgeTile -> edgeTile.rotations().stream())
+                .collect(toSet()));
         return circleEdges.get(size);
     }
 
-    public static  Set<Coord> calcCircle(Coord centre, int size) {
+    public static Set<Coord> calcCircle(Coord centre, int size) {
         return baseCircle(size).stream()
                 .map(centre::add)
                 .collect(toSet());
@@ -80,12 +83,9 @@ public class CircleOperations {
     }
 
     public static List<List<Coord>> getCircleRays(Coord centre, int size) {
-        if (!circleRays.containsKey(size)) {
-            List<List<Coord>> rays = baseCircle(size).stream()
-                    .map(CircleOperations::calculateRay)
-                    .collect(toList());
-            circleRays.put(size, rays);
-        }
+        circleRays.computeIfAbsent(size, radius -> baseCircle(radius).stream()
+                .map(CircleOperations::calculateRay)
+                .collect(toList()));
         return circleRays.get(size).stream()
                 .map(rayLine -> rayLine.stream()
                         .map(rayTile -> rayTile.add(centre))
@@ -129,4 +129,3 @@ public class CircleOperations {
         return aAngleDifference < bAngleDifference ? a : b;
     }
 }
-

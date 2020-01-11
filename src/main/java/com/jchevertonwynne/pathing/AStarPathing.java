@@ -1,8 +1,10 @@
-package com.jchevertonwynne;
+package com.jchevertonwynne.pathing;
 
-import com.jchevertonwynne.structures.AStarOption;
 import com.jchevertonwynne.structures.Coord;
+import lombok.NonNull;
+import lombok.Value;
 
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -10,12 +12,22 @@ import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Set;
 
-import static com.jchevertonwynne.structures.AStarOption.AStarOptionComparator;
 import static com.jchevertonwynne.structures.Coord.CARDINAL_DIRECTIONS;
 import static java.lang.String.format;
+import static java.util.Comparator.comparingDouble;
 import static java.util.stream.Collectors.toList;
 
 public class AStarPathing {
+    @Value
+    private static class AStarOption {
+        private double distanceEstimate;
+        private int actualDistance;
+        private @NonNull Coord tile;
+        private @NonNull List<Coord> history;
+    }
+
+    private static Comparator<AStarOption> AStarOptionComparator = comparingDouble(aStarOption -> aStarOption.actualDistance + aStarOption.distanceEstimate);
+
     /**
      * A* to path from current position to destination
      * @param destination Goal coordinate
@@ -63,7 +75,7 @@ public class AStarPathing {
      * @param goal Destination
      * @return Unchecked neighbour A* states
      */
-    private static List<AStarOption> evaluateChoices(AStarOption aStarOption, Coord goal,  Map<Coord, Boolean> world) {
+    private static List<AStarOption> evaluateChoices(AStarOption aStarOption, Coord goal, Map<Coord, Boolean> world) {
         int currDist = aStarOption.getActualDistance();
         Coord currTile = aStarOption.getTile();
         List<Coord> history = aStarOption.getHistory();

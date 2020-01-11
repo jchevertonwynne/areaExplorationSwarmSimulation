@@ -1,12 +1,12 @@
-package com.jchevertonwynne;
+package com.jchevertonwynne.simulation;
 
 import com.jchevertonwynne.structures.Coord;
 
 import java.util.List;
 import java.util.Map;
 
-import static com.jchevertonwynne.structures.CircleOperations.getCircleRays;
-import static com.jchevertonwynne.structures.Common.SIGHT_RADIUS;
+import static com.jchevertonwynne.CircleOperations.getCircleRays;
+import static com.jchevertonwynne.Common.SIGHT_RADIUS;
 
 public class Scanner {
     private Boolean[][] world;
@@ -26,16 +26,7 @@ public class Scanner {
         for (List<Coord> ray : rays) {
             boolean edgeSeen = false;
             for (Coord coord : ray) {
-                int cx = coord.getX();
-                int cy = coord.getY();
-                boolean pathable;
-
-                try {
-                    pathable = this.world[cx][cy];
-                }
-                catch (ArrayIndexOutOfBoundsException ignored) {
-                    break;
-                }
+                boolean pathable = this.world[coord.getX()][coord.getY()];
 
                 if (!pathable) {
                     edgeSeen = true;

@@ -1,12 +1,10 @@
 package com.jchevertonwynne.structures;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
 import lombok.NonNull;
+import lombok.Value;
 
-@Getter
-@AllArgsConstructor
+@Value
 public class Move {
-    private final @NonNull Coord tile;
-    private final @NonNull int distance;
+    private @NonNull Coord tile;
+    private int distance;
 }

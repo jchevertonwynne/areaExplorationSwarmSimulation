@@ -1,5 +1,6 @@
-package com.jchevertonwynne.structures;
+package com.jchevertonwynne;
 
+import com.jchevertonwynne.structures.Coord;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
@@ -10,24 +11,6 @@ import static java.lang.Math.PI;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class CircleOperationsTest {
-
-    @Test
-    public void shouldAssembleArc() {
-        Set<Coord> result = CircleOperations.calculateArc(5);
-        Set<Coord> expected = Set.of(
-                new Coord(1, 5),
-                new Coord(0, 5),
-                new Coord(5, 0),
-                new Coord(4, 3),
-                new Coord(3, 4),
-                new Coord(5, 1),
-                new Coord(2, 5),
-                new Coord(5, 2)
-        );
-
-        assertEquals(result, expected);
-    }
-
     @Test
     public void shouldAssembleCircle() {
         Set<Coord> result = CircleOperations.calcCircle(new Coord(1, 4), 5);

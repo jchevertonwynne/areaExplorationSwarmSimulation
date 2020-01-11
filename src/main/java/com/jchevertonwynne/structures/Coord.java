@@ -1,25 +1,22 @@
 package com.jchevertonwynne.structures;
 
-import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NonNull;
 import lombok.ToString;
+import lombok.Value;
 
 import java.util.List;
 
 import static java.lang.Math.pow;
 import static java.util.Arrays.asList;
 
-@Getter
+@Value
 @ToString
 @EqualsAndHashCode
-@AllArgsConstructor
 public class Coord {
-    private final @NonNull int x;
-    private final @NonNull int y;
+    private int x;
+    private int y;
 
-    public static final List<Coord> CARDINAL_DIRECTIONS = asList(
+    public static List<Coord> CARDINAL_DIRECTIONS = asList(
             new Coord(0, 1),
             new Coord(1, 0),
             new Coord(0, -1),

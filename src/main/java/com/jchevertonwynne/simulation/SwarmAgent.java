@@ -1,4 +1,4 @@
-package com.jchevertonwynne;
+package com.jchevertonwynne.simulation;
 
 import com.jchevertonwynne.structures.Coord;
 import com.jchevertonwynne.structures.Move;
@@ -17,15 +17,17 @@ import java.util.PriorityQueue;
 import java.util.Random;
 import java.util.Set;
 
-import static com.jchevertonwynne.AStarPathing.calculatePath;
-import static com.jchevertonwynne.BoundarySearch.findAvailable;
-import static com.jchevertonwynne.structures.CircleOperations.getCircleRays;
-import static com.jchevertonwynne.structures.Common.RANDOM_BEST_SELECT_LIMIT;
-import static com.jchevertonwynne.structures.Common.SIGHT_RADIUS;
+import static com.jchevertonwynne.CircleOperations.getCircleRays;
+import static com.jchevertonwynne.Common.RANDOM_BEST_SELECT_LIMIT;
+import static com.jchevertonwynne.Common.RANDOM_SELECTION;
+import static com.jchevertonwynne.Common.SIGHT_RADIUS;
+import static com.jchevertonwynne.pathing.AStarPathing.calculatePath;
+import static com.jchevertonwynne.pathing.BoundarySearch.findAvailable;
 import static java.lang.Math.log;
 import static java.lang.Math.min;
 import static java.lang.Math.pow;
 import static java.util.Comparator.comparingDouble;
+import static java.util.Comparator.comparingInt;
 import static java.util.Objects.hash;
 
 public class SwarmAgent {
@@ -113,36 +115,48 @@ public class SwarmAgent {
                 logger.info("Agent {} scanning at {}", color.getRGB(),  position.toString());
                 scanArea();
                 logger.info("Agent {} scanned and discovered {} coords", color.getRGB(), newlyDone.size());
-                PriorityQueue<Move> pq = new PriorityQueue<>(comparingDouble(this::evaluateGoodness));
-                pq.addAll(findAvailable(position, world));
 
-                if (pq.size() == 0) {
+                List<Move> available = findAvailable(position, world);
+
+                if (available.size() == 0) {
                     logger.info("Agent {} going back to start {} from {}", color.getRGB(),  startPosition.toString(), position.toString());
                     setCurrentPath(calculatePath(position, startPosition, world));
                 }
                 else {
-                    int choices = min(RANDOM_BEST_SELECT_LIMIT, pq.size());
-                    List<Move> moveOptions = new ArrayList<>(RANDOM_BEST_SELECT_LIMIT);
-                    for (int i = 0; i < choices; i++) {
-                        moveOptions.add(pq.poll());
-                    }
-
-                    Coord tile = moveOptions.get(new Random().nextInt(choices)).getTile();
+                    Coord tile = chooseNextMove(available);
                     logger.info("Agent {} now moving to {}", color.getRGB(), tile.toString());
-
                     setCurrentPath(calculatePath(position, tile, world));
                     int potentialDiscovered = getPotentialNewVisible(tile);
                     logger.info("Agent {} potentially discovering {} coords", color.getRGB(), potentialDiscovered);
                     double smallCutoff = 0.5 * pow(SIGHT_RADIUS, 2);
-                    DiscoveryMode m = potentialDiscovered > smallCutoff ? DiscoveryMode.LARGE : DiscoveryMode.SMALL;
-                    if (m != discoveryMode) {
-                        logger.info("Agent {} switching to mode {}", color.getRGB(), m.toString());
+                    DiscoveryMode newDiscoveryMode = potentialDiscovered > smallCutoff ? DiscoveryMode.LARGE : DiscoveryMode.SMALL;
+                    if (!discoveryMode.equals(newDiscoveryMode)) {
+                        logger.info("Agent {} switching to mode {}", color.getRGB(), newDiscoveryMode.toString());
+                        discoveryMode = newDiscoveryMode;
                     }
-                    discoveryMode = m;
-
                 }
+
             }
             turns++;
+        }
+    }
+
+    private Coord chooseNextMove(List<Move> choices) {
+        if (choices.size() == 0) {
+            throw new IllegalArgumentException("A zero size list is not allowed");
+        }
+        if (RANDOM_SELECTION) {
+            PriorityQueue<Move> moveRanking = new PriorityQueue<>(comparingDouble(this::evaluateGoodness));
+            moveRanking.addAll(choices);
+            int totalChoices = min(RANDOM_BEST_SELECT_LIMIT, moveRanking.size());
+            List<Move> moveOptions = new ArrayList<>(RANDOM_BEST_SELECT_LIMIT);
+            for (int i = 0; i < totalChoices; i++) {
+                moveOptions.add(moveRanking.poll());
+            }
+            return moveOptions.get(new Random().nextInt(totalChoices)).getTile();
+        }
+        else {
+            return choices.stream().min(comparingInt(Move::getDistance)).get().getTile();
         }
     }
 
