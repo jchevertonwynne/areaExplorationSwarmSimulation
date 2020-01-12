@@ -1,7 +1,5 @@
 package com.jchevertonwynne.structures;
 
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
 import lombok.Value;
 
 import java.util.List;
@@ -10,8 +8,6 @@ import static java.lang.Math.pow;
 import static java.util.Arrays.asList;
 
 @Value
-@ToString
-@EqualsAndHashCode
 public class Coord {
     private int x;
     private int y;

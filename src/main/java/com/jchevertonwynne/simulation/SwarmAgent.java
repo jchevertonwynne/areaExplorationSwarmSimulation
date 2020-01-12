@@ -32,6 +32,7 @@ import static java.util.Objects.hash;
 
 public class SwarmAgent {
     Logger logger = LoggerFactory.getLogger(SwarmAgent.class);
+    private String loggingColorString;
 
     private Coord startPosition;
     private Coord position;
@@ -52,13 +53,14 @@ public class SwarmAgent {
     }
 
     public SwarmAgent(Coord position, Color color, Scanner scanner) {
+        loggingColorString = color.toString().substring(14);
         this.position = position;
         this.color = color;
         this.scanner = scanner;
         world.put(position, true);
         startPosition = position;
 
-        logger.debug("Initialising agent {} at {}", color.getRGB(), position.toString());
+        logger.debug("Initialising agent {} at {}", loggingColorString, position.toString());
     }
 
     public Coord getPosition() {
@@ -109,29 +111,29 @@ public class SwarmAgent {
         if (!finished && getCurrentPath().size() == 0) {
             if (position.equals(startPosition) && turns != 0) {
                 finished = true;
-                logger.info("Agent {} returned to start {}", color.getRGB(),  position.toString());
+                logger.info("Agent {} returned to start {}", loggingColorString,  position.toString());
             }
             else {
-                logger.info("Agent {} scanning at {}", color.getRGB(),  position.toString());
+                logger.info("Agent {} scanning at {}", loggingColorString,  position.toString());
                 scanArea();
-                logger.info("Agent {} scanned and discovered {} coords", color.getRGB(), newlyDone.size());
+                logger.info("Agent {} scanned and discovered {} coords", loggingColorString, newlyDone.size());
 
                 List<Move> available = findAvailable(position, world);
 
                 if (available.size() == 0) {
-                    logger.info("Agent {} going back to start {} from {}", color.getRGB(),  startPosition.toString(), position.toString());
+                    logger.info("Agent {} going back to start {} from {}", loggingColorString,  startPosition.toString(), position.toString());
                     setCurrentPath(calculatePath(position, startPosition, world));
                 }
                 else {
                     Coord tile = chooseNextMove(available);
-                    logger.info("Agent {} now moving to {}", color.getRGB(), tile.toString());
+                    logger.info("Agent {} now moving to {}", loggingColorString, tile.toString());
                     setCurrentPath(calculatePath(position, tile, world));
                     int potentialDiscovered = getPotentialNewVisible(tile);
-                    logger.info("Agent {} potentially discovering {} coords", color.getRGB(), potentialDiscovered);
+                    logger.info("Agent {} potentially discovering {} coords", loggingColorString, potentialDiscovered);
                     double smallCutoff = 0.5 * pow(SIGHT_RADIUS, 2);
                     DiscoveryMode newDiscoveryMode = potentialDiscovered > smallCutoff ? DiscoveryMode.LARGE : DiscoveryMode.SMALL;
                     if (!discoveryMode.equals(newDiscoveryMode)) {
-                        logger.info("Agent {} switching to mode {}", color.getRGB(), newDiscoveryMode.toString());
+                        logger.info("Agent {} switching to mode {}", loggingColorString, newDiscoveryMode.toString());
                         discoveryMode = newDiscoveryMode;
                     }
                 }

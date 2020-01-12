@@ -26,18 +26,23 @@ public class Scanner {
         for (List<Coord> ray : rays) {
             boolean edgeSeen = false;
             for (Coord coord : ray) {
-                boolean pathable = this.world[coord.getX()][coord.getY()];
+                boolean pathable;
 
-                if (!pathable) {
-                    edgeSeen = true;
-                }
-                else if (edgeSeen) {
-                    break;
-                }
+                try {
+                    pathable = this.world[coord.getX()][coord.getY()];
+                    if (!pathable) {
+                        edgeSeen = true;
+                    }
+                    else if (edgeSeen) {
+                        break;
+                    }
 
-                if (!agentWorld.containsKey(coord)) {
-                    agent.noteNewlyDone(coord);
-                    agentWorld.put(coord, pathable);
+                    if (!agentWorld.containsKey(coord)) {
+                        agent.noteNewlyDone(coord);
+                        agentWorld.put(coord, pathable);
+                    }
+                }
+                catch (IndexOutOfBoundsException e) {
                 }
             }
         }
