@@ -22,7 +22,7 @@ import static com.jchevertonwynne.Common.RANDOM_BEST_SELECT_LIMIT;
 import static com.jchevertonwynne.Common.RANDOM_SELECTION;
 import static com.jchevertonwynne.Common.SIGHT_RADIUS;
 import static com.jchevertonwynne.pathing.AStarPathing.calculatePath;
-import static com.jchevertonwynne.pathing.BoundarySearch.findAvailable;
+import static com.jchevertonwynne.pathing.BoundarySearch.calculateBoundaryTiles;
 import static java.lang.Math.log;
 import static java.lang.Math.min;
 import static java.lang.Math.pow;
@@ -101,6 +101,10 @@ public class SwarmAgent {
         return result;
     }
 
+    /**
+     * Keeps record newly taken path for drawing reference
+     * @return Tiles travelled since last seen
+     */
     public List<Coord> getNewPathTaken() {
         List<Coord> result = newPathTaken;
         newPathTaken = new ArrayList<>();
@@ -118,7 +122,7 @@ public class SwarmAgent {
                 scanArea();
                 logger.info("Agent {} scanned and discovered {} coords", loggingColorString, newlyDone.size());
 
-                List<Move> available = findAvailable(position, world);
+                List<Move> available = calculateBoundaryTiles(position, world);
 
                 if (available.size() == 0) {
                     logger.info("Agent {} going back to start {} from {}", loggingColorString,  startPosition.toString(), position.toString());
@@ -178,8 +182,8 @@ public class SwarmAgent {
         switch(discoveryMode) {
             case LARGE: return largeDiscovery(move);
             case SMALL: return smallDiscovery(move);
+            default: throw new IllegalPathStateException();
         }
-        throw new IllegalPathStateException();
     }
 
     private  double smallDiscovery(Move move) {

@@ -1,7 +1,7 @@
 package com.jchevertonwynne;
 
 public class Common {
-    public static String BACKGROUND_NAME = "areas/floorPlan.png";
+    public static String BACKGROUND_NAME = "areas/maze.png";
     public static int SIGHT_RADIUS = 30;
     public static int DFS_SOFT_LIST_RETURN_LIMIT = 500;
     public static int DFS_MAX_TURNS_WITHOUT_FIND = 200;

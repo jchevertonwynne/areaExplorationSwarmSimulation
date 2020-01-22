@@ -42,7 +42,7 @@ public class Scanner {
                         agentWorld.put(coord, pathable);
                     }
                 }
-                catch (IndexOutOfBoundsException e) {
+                catch (IndexOutOfBoundsException ignored) {
                 }
             }
         }

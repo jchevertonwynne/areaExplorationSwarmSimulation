@@ -25,7 +25,6 @@ public class Display extends JPanel {
     private Simulator simulator;
     private int imagesTaken;
 
-
     public Display(JFrame frame) {
         this.frame = frame;
         imagesTaken = 0;
@@ -65,9 +64,11 @@ public class Display extends JPanel {
     }
 
     public void saveImage() {
-        File output = simulator.complete()
-                ? new File("imageOutput/finished.png")
-                : new File(format("imageOutput/output%04d.png", imagesTaken));
+        String filename = simulator.complete()
+                ? "imageOutput/finished.png"
+                : format("imageOutput/output%04d.png", imagesTaken);
+        File output = new File(filename);
+
         try {
             ImageIO.write(image, "png", output);
             logger.info("Image {} saved", output.getName());
