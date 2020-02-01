@@ -1,26 +1,38 @@
 package com.jchevertonwynne.simulation;
 
 import com.jchevertonwynne.structures.Coord;
+import com.jchevertonwynne.structures.TileStatus;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
-import static com.jchevertonwynne.CircleOperations.getCircleRays;
-import static com.jchevertonwynne.Common.SIGHT_RADIUS;
+import static com.jchevertonwynne.utils.CircleOperations.generateCircleRays;
+import static com.jchevertonwynne.utils.Common.SIGHT_RADIUS;
+import static java.util.stream.Collectors.toSet;
 
 public class Scanner {
-    private Boolean[][] world;
+    private final Boolean[][] world;
+    private final SwarmAgent agent;
+    private final Set<SwarmAgent> otherAgents;
 
-    public Scanner(Boolean[][] world) {
+    public Scanner(Boolean[][] world, SwarmAgent agent, Set<SwarmAgent> otherAgents) {
         this.world = world;
+        this.agent = agent;
+        this.otherAgents = otherAgents;
+    }
+
+    public Set<SwarmAgent> getOtherLocalAgents() {
+        return otherAgents.stream()
+                .filter(otherAgent -> otherAgent.distanceFrom(agent) < SIGHT_RADIUS)
+                .collect(toSet());
     }
 
     /**
      * Scan the area around an agent, cutting off at walls
-     * @param agent Agent to scan area around
      */
-    public void scan(SwarmAgent agent) {
-        List<List<Coord>> rays = getCircleRays(agent.getPosition(), SIGHT_RADIUS);
+    public void scan() {
+        List<List<Coord>> rays = generateCircleRays(agent.getPosition(), SIGHT_RADIUS);
         Map<Coord, Boolean> agentWorld = agent.getWorld();
 
         for (List<Coord> ray : rays) {
@@ -38,7 +50,7 @@ public class Scanner {
                     }
 
                     if (!agentWorld.containsKey(coord)) {
-                        agent.noteNewlyDone(coord);
+                        agent.noteNewlyDone(new TileStatus(coord, pathable));
                         agentWorld.put(coord, pathable);
                     }
                 }

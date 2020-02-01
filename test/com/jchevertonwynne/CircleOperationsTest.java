@@ -1,6 +1,7 @@
 package com.jchevertonwynne;
 
 import com.jchevertonwynne.structures.Coord;
+import com.jchevertonwynne.utils.CircleOperations;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;

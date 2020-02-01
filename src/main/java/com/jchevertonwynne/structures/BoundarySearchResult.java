@@ -6,6 +6,6 @@ import java.util.List;
 
 @Value
 public class BoundarySearchResult {
-    private boolean limitedLeft;
-    private List<Move> moves;
+    private List<Move> legalMoves;
+    private List<Move> blacklistedMoves;
 }

@@ -1,12 +1,13 @@
 package com.jchevertonwynne.simulation;
 
+import com.jchevertonwynne.structures.BoundarySearchResult;
 import com.jchevertonwynne.structures.Coord;
 import com.jchevertonwynne.structures.Move;
+import com.jchevertonwynne.structures.TileStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.awt.Color;
-import java.awt.geom.IllegalPathStateException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -16,55 +17,64 @@ import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Random;
 import java.util.Set;
+import java.util.stream.Collectors;
 
-import static com.jchevertonwynne.CircleOperations.getCircleRays;
-import static com.jchevertonwynne.Common.RANDOM_BEST_SELECT_LIMIT;
-import static com.jchevertonwynne.Common.RANDOM_SELECTION;
-import static com.jchevertonwynne.Common.SIGHT_RADIUS;
 import static com.jchevertonwynne.pathing.AStarPathing.calculatePath;
 import static com.jchevertonwynne.pathing.BoundarySearch.calculateBoundaryTiles;
+import static com.jchevertonwynne.utils.CircleOperations.generateCircleRays;
+import static com.jchevertonwynne.utils.Common.RANDOM_BEST_SELECT_LIMIT;
+import static com.jchevertonwynne.utils.Common.RANDOM_SELECTION;
+import static com.jchevertonwynne.utils.Common.SIGHT_RADIUS;
 import static java.lang.Math.log;
 import static java.lang.Math.min;
-import static java.lang.Math.pow;
 import static java.util.Comparator.comparingDouble;
-import static java.util.Comparator.comparingInt;
 import static java.util.Objects.hash;
 
 public class SwarmAgent {
-    Logger logger = LoggerFactory.getLogger(SwarmAgent.class);
-    private String loggingColorString;
+    private final Logger logger = LoggerFactory.getLogger(SwarmAgent.class);
 
-    private Coord startPosition;
     private Coord position;
-    private Color color;
+    private Coord currentGoal;
+    private final Coord startPosition;
+    private final Color color;
+
+    private final ScannerFactory scannerFactory;
+    private Scanner scanner;
+
+    private int turn = 0;
+    private int scansDone = 0;
+    private boolean finished = false;
+
     private Map<Coord, Boolean> world = new HashMap<>();
     private List<Coord> currentPath = new LinkedList<>();
-    private Scanner scanner;
-    private int scansDone = 0;
-    private List<Coord> newlyDone = new LinkedList<>();
-    private List<Coord> newPathTaken = new LinkedList<>();
-    private DiscoveryMode discoveryMode = DiscoveryMode.LARGE;
-    private boolean finished = false;
-    private int turns = 0;
 
-    private enum DiscoveryMode {
-        LARGE,
-        SMALL
-    }
+    private Map<SwarmAgent, List<TileStatus>> otherAgentsMemo = new HashMap<>();
+    private Set<Coord> blackList = new HashSet<>();
 
-    public SwarmAgent(Coord position, Color color, Scanner scanner) {
-        loggingColorString = color.toString().substring(14);
+    private final Random random;
+
+    public SwarmAgent(Coord position, Color color, ScannerFactory scannerFactory) {
+        this.startPosition = position;
         this.position = position;
         this.color = color;
-        this.scanner = scanner;
+        this.scannerFactory = scannerFactory;
+        this.random = new Random();
         world.put(position, true);
-        startPosition = position;
 
-        logger.debug("Initialising agent {} at {}", loggingColorString, position.toString());
+        logger.debug("Initialising agent {} at {}", this, startPosition);
+    }
+
+    public void initialiseScanner() {
+        scanner = scannerFactory.instance(this);
+        scanner.getOtherLocalAgents().forEach(agent -> otherAgentsMemo.put(agent, new ArrayList<>()));
     }
 
     public Coord getPosition() {
         return position;
+    }
+
+    public Coord getCurrentGoal() {
+        return currentGoal;
     }
 
     public Color getColor() {
@@ -72,15 +82,7 @@ public class SwarmAgent {
     }
 
     public Map<Coord, Boolean> getWorld() {
-        return world;
-    }
-
-    private List<Coord> getCurrentPath() {
-        return currentPath;
-    }
-
-    private void setCurrentPath(List<Coord> currentPath) {
-        this.currentPath = currentPath;
+        return new HashMap<>(world);
     }
 
     public int getScansDone() {
@@ -91,60 +93,84 @@ public class SwarmAgent {
         return finished;
     }
 
-    /**
-     * Keeps record of newly discovered tiles so that drawing to screen can be more efficient
-     * @return Tiles discovered since last scan
-     */
-    public List<Coord> getNewlyDone() {
-        List<Coord> result = newlyDone;
-        newlyDone = new LinkedList<>();
-        return result;
+    public void shareWorldInfo(List<TileStatus> newInformation) {
+        newInformation.forEach(info -> {
+            Coord tile = info.getCoord();
+            boolean tileStatus = info.isStatus();
+            world.put(tile, tileStatus);
+        });
     }
 
-    /**
-     * Keeps record newly taken path for drawing reference
-     * @return Tiles travelled since last seen
-     */
-    public List<Coord> getNewPathTaken() {
-        List<Coord> result = newPathTaken;
-        newPathTaken = new ArrayList<>();
-        return result;
+    public List<TileStatus> serveNewTileStatuses(SwarmAgent agent) {
+        List<TileStatus> tileStatuses = otherAgentsMemo.get(agent);
+        ArrayList<TileStatus> statusesCopy = new ArrayList<>(tileStatuses);
+        tileStatuses.clear();
+        return statusesCopy;
     }
 
-    public void calculateNextMove() {
-        if (!finished && getCurrentPath().size() == 0) {
-            if (position.equals(startPosition) && turns != 0) {
-                finished = true;
-                logger.info("Agent {} returned to start {}", loggingColorString,  position.toString());
+    public void processTurn() {
+        // update all nearby agents with latest world info and get latest from them
+        Set<SwarmAgent> otherLocalAgents = scanner.getOtherLocalAgents();
+        otherLocalAgents.forEach(agent -> {
+            List<TileStatus> tileStatuses = otherAgentsMemo.get(agent);
+            ArrayList<TileStatus> statusesCopy = new ArrayList<>(tileStatuses);
+            tileStatuses.clear();
+            agent.shareWorldInfo(statusesCopy);
+            shareWorldInfo(agent.serveNewTileStatuses(this));
+        });
+
+        if (turn > 0) {
+            Set<SwarmAgent> headingSameWay = otherLocalAgents.stream()
+                    .filter(agent -> agent.getCurrentGoal().distance(currentGoal) < SIGHT_RADIUS)
+                    .collect(Collectors.toSet());
+//            if (headingSameWay.size() > 0) {
+//
+//            }
+        }
+
+
+        // if agent is done or still on path we let it do its thing
+        if (finished || currentPath.size() != 0) {
+            return;
+        }
+
+        // agent has explored and now returned back to beginning
+        if (position.equals(startPosition) && turn != 0) {
+            finished = true;
+            logger.info("Agent {} returned to start {} in {} turns", this,  position, turn);
+        }
+        else {
+           chooseNextMove();
+        }
+        turn++;
+    }
+
+    private void chooseNextMove() {
+        logger.info("Agent {} scanning at {}", this,  position);
+        scanArea();
+
+        BoundarySearchResult boundarySearchResult = calculateBoundaryTiles(position, world, blackList);
+        List<Move> legalMoves = boundarySearchResult.getLegalMoves();
+
+        if (legalMoves.size() != 0) {
+            Coord tile = chooseNextMove(legalMoves);
+            logger.info("Agent {} now moving to {}", this, tile.toString());
+            currentPath = calculatePath(position, tile, world);
+        }
+        else {
+            List<Move> blacklistedMoves = boundarySearchResult.getBlacklistedMoves();
+            if (blacklistedMoves.size() == 0) {
+                logger.info("Agent {} going back to start {} from {}", this,  startPosition, position);
+                currentPath = calculatePath(position, startPosition, world);
             }
             else {
-                logger.info("Agent {} scanning at {}", loggingColorString,  position.toString());
-                scanArea();
-                logger.info("Agent {} scanned and discovered {} coords", loggingColorString, newlyDone.size());
-
-                List<Move> available = calculateBoundaryTiles(position, world);
-
-                if (available.size() == 0) {
-                    logger.info("Agent {} going back to start {} from {}", loggingColorString,  startPosition.toString(), position.toString());
-                    setCurrentPath(calculatePath(position, startPosition, world));
-                }
-                else {
-                    Coord tile = chooseNextMove(available);
-                    logger.info("Agent {} now moving to {}", loggingColorString, tile.toString());
-                    setCurrentPath(calculatePath(position, tile, world));
-                    int potentialDiscovered = getPotentialNewVisible(tile);
-                    logger.info("Agent {} potentially discovering {} coords", loggingColorString, potentialDiscovered);
-                    double smallCutoff = 0.5 * pow(SIGHT_RADIUS, 2);
-                    DiscoveryMode newDiscoveryMode = potentialDiscovered > smallCutoff ? DiscoveryMode.LARGE : DiscoveryMode.SMALL;
-                    if (!discoveryMode.equals(newDiscoveryMode)) {
-                        logger.info("Agent {} switching to mode {}", loggingColorString, newDiscoveryMode.toString());
-                        discoveryMode = newDiscoveryMode;
-                    }
-                }
-
+                Coord tile = chooseNextMove(blacklistedMoves);
+                blackList.remove(tile);
+                logger.info("Agent {} now moving to {}", this, tile.toString());
+                currentPath = calculatePath(position, tile, world);
             }
-            turns++;
         }
+        currentGoal = position;
     }
 
     private Coord chooseNextMove(List<Move> choices) {
@@ -152,24 +178,14 @@ public class SwarmAgent {
             throw new IllegalArgumentException("A zero size list is not allowed");
         }
         if (RANDOM_SELECTION) {
-            PriorityQueue<Move> moveRanking = new PriorityQueue<>(comparingDouble(this::evaluateGoodness));
-            moveRanking.addAll(choices);
-            int totalChoices = min(RANDOM_BEST_SELECT_LIMIT, moveRanking.size());
-            List<Move> moveOptions = new ArrayList<>(RANDOM_BEST_SELECT_LIMIT);
-            for (int i = 0; i < totalChoices; i++) {
-                moveOptions.add(moveRanking.poll());
-            }
-            return moveOptions.get(new Random().nextInt(totalChoices)).getTile();
+            int available = min(RANDOM_BEST_SELECT_LIMIT, choices.size());
+            PriorityQueue<Move> pq = new PriorityQueue<>(comparingDouble(this::evaluateGoodness));
+            pq.addAll(choices);
+            List<Move> moveOptions = new ArrayList<>(pq).subList(0, available);
+            return moveOptions.get(random.nextInt(available)).getTile();
         }
         else {
-            return choices.stream().min(comparingInt(Move::getDistance)).get().getTile();
-        }
-    }
-
-    public void applyNextMove() {
-        if (!finished) {
-            newPathTaken.add(position);
-            position = getCurrentPath().remove(0);
+            return choices.stream().min(comparingDouble(this::evaluateGoodness)).get().getTile();
         }
     }
 
@@ -179,21 +195,9 @@ public class SwarmAgent {
      * @return double Arbitrary score number of goodness
      */
     private double evaluateGoodness(Move move) {
-        switch(discoveryMode) {
-            case LARGE: return largeDiscovery(move);
-            case SMALL: return smallDiscovery(move);
-            default: throw new IllegalPathStateException();
-        }
-    }
-
-    private  double smallDiscovery(Move move) {
-        return move.getDistance();
-    }
-
-    private double largeDiscovery(Move move) {
-        int discoverable = getPotentialNewVisible(move.getTile());
+        int discoverable = calculatePotentialNewVisible(move.getTile());
         double distance = move.getDistance();
-        return - (discoverable / log(distance));
+        return -(discoverable / log(distance));
     }
 
     /**
@@ -201,8 +205,8 @@ public class SwarmAgent {
      * @param coord Position to look for new
      * @return number of potentially visible tiles from coord
      */
-    private int getPotentialNewVisible(Coord coord) {
-        List<List<Coord>> rays = getCircleRays(coord, SIGHT_RADIUS);
+    private int calculatePotentialNewVisible(Coord coord) {
+        List<List<Coord>> rays = generateCircleRays(coord, SIGHT_RADIUS);
         Set<Coord> seen = new HashSet<>();
         int result = 0;
 
@@ -223,12 +227,35 @@ public class SwarmAgent {
      * Scan area, increase scan counter and store previous positions
      */
     private void scanArea() {
+        scanner.scan();
         scansDone++;
-        scanner.scan(this);
     }
 
-    public void noteNewlyDone(Coord coord) {
-        newlyDone.add(coord);
+    public void applyNextMove() {
+        if (!finished) {
+            position = currentPath.remove(0);
+        }
+    }
+
+    public void noteNewlyDone(TileStatus status) {
+        otherAgentsMemo.forEach((agent, tileStatusList) -> tileStatusList.add(status));
+    }
+
+    public double distanceFrom(Coord coord) {
+        return position.distance(coord);
+    }
+
+    public double distanceFrom(SwarmAgent agent) {
+        return position.distance(agent.getPosition());
+    }
+
+    public double distanceToGoal() {
+        return position.distance(currentGoal);
+    }
+
+    @Override
+    public String toString() {
+        return color.toString().substring(14);
     }
 
     @Override

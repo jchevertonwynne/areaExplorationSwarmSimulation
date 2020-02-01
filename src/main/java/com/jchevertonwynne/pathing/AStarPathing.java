@@ -81,7 +81,7 @@ public class AStarPathing {
         List<Coord> history = aStarOption.getHistory();
 
         return CARDINAL_DIRECTIONS.stream()
-                .map(currTile::add)
+                .map(currTile::combine)
                 .filter(coord -> world.getOrDefault(coord, false))
                 .map(coord -> {
                     List<Coord> newHistory = new LinkedList<>(history);

@@ -5,21 +5,20 @@ import lombok.Value;
 import java.util.List;
 
 import static java.lang.Math.pow;
-import static java.util.Arrays.asList;
 
 @Value
 public class Coord {
     private int x;
     private int y;
 
-    public static List<Coord> CARDINAL_DIRECTIONS = asList(
+    public static List<Coord> CARDINAL_DIRECTIONS = List.of(
             new Coord(0, 1),
             new Coord(1, 0),
             new Coord(0, -1),
             new Coord(-1, 0)
     );
 
-    public Coord add(Coord other) {
+    public Coord combine(Coord other) {
         return new Coord(
                 x + other.getX(),
                 y + other.getY()
@@ -27,7 +26,7 @@ public class Coord {
     }
 
     public List<Coord> rotations() {
-        return asList(
+        return List.of(
                 this,
                 new Coord(-x, -y),
                 new Coord(x, -y),

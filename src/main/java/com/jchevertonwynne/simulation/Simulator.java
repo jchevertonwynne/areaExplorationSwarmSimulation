@@ -1,31 +1,45 @@
 package com.jchevertonwynne.simulation;
 
+import com.jchevertonwynne.display.Displayable;
 import com.jchevertonwynne.structures.Coord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.awt.Color;
 import java.awt.Graphics;
-import java.awt.image.BufferedImage;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
-public class Simulator {
+import static com.jchevertonwynne.utils.Common.START_POSITION;
+
+public class Simulator implements Displayable {
     Logger logger = LoggerFactory.getLogger(Simulator.class);
 
-    private Scanner scanner;
-    private Set<SwarmAgent> agents;
-    private Map<Color, Integer> scans;
+    private static class AgentHandlerThread extends Thread {
+        private final SwarmAgent agent;
 
-    public Simulator(int agentCount, BufferedImage image) {
-        Boolean[][] world = loadWorld(image);
+        public AgentHandlerThread(SwarmAgent agent) {
+            this.agent = agent;
+        }
 
-        scanner = new Scanner(world);
-        agents = new HashSet<>();
-        scans = new HashMap<>();
+        @Override
+        public void run() {
+            agent.processTurn();
+        }
+    }
+
+    private ScannerFactory scannerFactory;
+    private Set<SwarmAgent> agents = new HashSet<>();
+    private Map<Color, Integer> scans = new HashMap<>();
+
+    public Simulator(int agentCount, Boolean[][] world) {
+        scannerFactory = new ScannerFactory(world, agents);
 
         for (int i = 0; i < agentCount; i++) {
             boolean added;
@@ -34,7 +48,10 @@ public class Simulator {
             } while (!added);
         }
 
-        agents.forEach(agent -> scans.put(agent.getColor(), 0));
+        agents.forEach(agent -> {
+            agent.initialiseScanner();
+            scans.put(agent.getColor(), 0);
+        });
     }
 
     /**
@@ -48,49 +65,13 @@ public class Simulator {
                 random.nextInt(256),
                 random.nextInt(256)
         );
-        return new SwarmAgent(new Coord(20, 20), agentColor, scanner);
+        return new SwarmAgent(START_POSITION, agentColor, scannerFactory);
     }
 
-    /**
-     * Load array of pathable terrain from png file
-     * @return Array of pathable terrain
-     */
-    private Boolean[][] loadWorld(BufferedImage image) {
-        int pathColor = new Color(255, 255, 255).getRGB();
-        Boolean[][] result = new Boolean[image.getWidth()][image.getHeight()];
-
-        for (int x = 0; x < image.getWidth(); x++) {
-            for (int y = 0; y < image.getHeight(); y++) {
-                result[x][y] = image.getRGB(x, y) == pathColor;
-            }
-        }
-
+    public Map<Coord, Boolean> combinedDiscovery() {
+        Map<Coord, Boolean> result = new HashMap<>();
+        agents.forEach(agent -> result.putAll(agent.getWorld()));
         return result;
-    }
-
-    /**
-     * Draw new discovered area, dots showing agent's paths and lines for history
-     * @param image To draw the display
-     */
-    public void displayWorld(BufferedImage image) {
-        int background = new Color(0, 255, 0).getRGB();
-        int wall = new Color(255, 0, 0).getRGB();
-        int path = new Color(0, 192, 255).getRGB();
-        agents.forEach(swarmAgent -> {
-            Map<Coord, Boolean> world = swarmAgent.getWorld();
-            swarmAgent.getNewlyDone().forEach(coord -> {
-                boolean pathable = world.get(coord);
-                image.setRGB(coord.getX(), coord.getY(), pathable ? background : wall);
-            });
-        });
-        Graphics graphics = image.getGraphics();
-        agents.forEach(swarmAgent -> {
-            Coord position = swarmAgent.getPosition();
-            graphics.setColor(swarmAgent.getColor());
-            graphics.fillOval(position.getX() - 4, position.getY() - 4, 8, 8);
-            swarmAgent.getNewPathTaken().forEach(pathCoord -> image.setRGB(pathCoord.getX(), pathCoord.getY(), path));
-        });
-        graphics.dispose();
     }
 
     /**
@@ -98,19 +79,39 @@ public class Simulator {
      * @return New scan status
      */
     public boolean progress() {
-        agents.forEach(SwarmAgent::calculateNextMove);
-        boolean scansDone = false;
+        ExecutorService threadManager = Executors.newCachedThreadPool();
+        agents.forEach(a -> threadManager.execute(new AgentHandlerThread(a)));
+
+        threadManager.shutdown();
+        try {
+            threadManager.awaitTermination(5, TimeUnit.MINUTES);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        boolean newlyScanned = false;
         for (SwarmAgent agent : agents) {
             if (scans.get(agent.getColor()) != agent.getScansDone()) {
-                scansDone = true;
                 scans.put(agent.getColor(), agent.getScansDone());
+                newlyScanned = true;
             }
         }
+
         agents.forEach(SwarmAgent::applyNextMove);
-        return scansDone;
+        return newlyScanned;
     }
 
     public boolean complete() {
         return agents.stream().allMatch(SwarmAgent::getFinished);
+    }
+
+    @Override
+    public void display(Graphics g) {
+        agents.forEach(swarmAgent -> {
+            Coord position = swarmAgent.getPosition();
+            g.setColor(swarmAgent.getColor());
+            g.fillOval(position.getX() - 4, position.getY() - 4, 8, 8);
+        });
+        g.dispose();
     }
 }
