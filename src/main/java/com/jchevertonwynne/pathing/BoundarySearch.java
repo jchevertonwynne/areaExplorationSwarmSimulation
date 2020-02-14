@@ -8,7 +8,6 @@ import lombok.Value;
 
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -54,7 +53,7 @@ public class BoundarySearch {
      */
     private BoundarySearchResult findAvailable() {
         BoundarySearchResult result = new BoundarySearchResult(legalResults, blacklistedResults);
-        List<MoveHistory> toCheck = new LinkedList<>();
+        List<MoveHistory> toCheck = new ArrayList<>();
         toCheck.add(new MoveHistory(position, position));
         seen.add(position);
 
@@ -83,7 +82,7 @@ public class BoundarySearch {
     }
 
     private List<MoveHistory> nextToCheckFinder(List<MoveHistory> nextAvailable) {
-        List<MoveHistory> nextToCheck = new LinkedList<>();
+        List<MoveHistory> nextToCheck = new ArrayList<>();
 
         nextAvailable.forEach(nextPair -> {
             Coord previousTile = nextPair.getLastTile();

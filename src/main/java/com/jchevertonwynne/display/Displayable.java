@@ -1,7 +1,7 @@
 package com.jchevertonwynne.display;
 
-import java.awt.Graphics;
+import java.awt.image.BufferedImage;
 
 public interface Displayable {
-    void display(Graphics g);
+    void display(BufferedImage image);
 }

@@ -3,21 +3,19 @@ package com.jchevertonwynne;
 import com.jchevertonwynne.display.DisplayFrame;
 import com.jchevertonwynne.display.DisplayPanel;
 import com.jchevertonwynne.simulation.Simulator;
-import com.jchevertonwynne.structures.Coord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.imageio.ImageIO;
-import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.util.Map;
 
 import static com.jchevertonwynne.utils.Common.AGENT_COUNT;
 import static com.jchevertonwynne.utils.Common.BACKGROUND_NAME;
-import static com.jchevertonwynne.utils.Common.PATH_COLOR;
+import static com.jchevertonwynne.utils.Common.DISPLAY;
+import static com.jchevertonwynne.utils.Common.PATH_COLOUR;
 
 public class Main {
 	private static Logger logger = LoggerFactory.getLogger(Main.class);
@@ -31,7 +29,7 @@ public class Main {
 
 		for (int x = 0; x < image.getWidth(); x++) {
 			for (int y = 0; y < image.getHeight(); y++) {
-				result[x][y] = image.getRGB(x, y) == PATH_COLOR;
+				result[x][y] = image.getRGB(x, y) == PATH_COLOUR;
 			}
 		}
 
@@ -39,29 +37,36 @@ public class Main {
 	}
 
     public static void main(String[] args) throws IOException {
-		BufferedImage image = ImageIO.read(new File(BACKGROUND_NAME));
+		File backgroundFile = new File(BACKGROUND_NAME);
+		BufferedImage image = ImageIO.read(backgroundFile);
+		BufferedImage originalImage = ImageIO.read(backgroundFile);
 		Graphics graphics = image.getGraphics();
 		Boolean[][] world = createWorld(image);
 		Simulator simulator = new Simulator(AGENT_COUNT, world);
 
-		DisplayPanel displayPanel = new DisplayPanel(image, simulator);
-		DisplayFrame displayFrame = new DisplayFrame(displayPanel);
+		DisplayPanel displayPanel;
+		DisplayFrame displayFrame;
+
+		if (DISPLAY) {
+			displayPanel= new DisplayPanel(image, simulator);
+		 	displayFrame= new DisplayFrame(displayPanel);
+		}
 
 		logger.info("Commencing exploration of {}", BACKGROUND_NAME);
 
-		int background = new Color(0, 255, 0).getRGB();
-		int wall = new Color(255, 0, 0).getRGB();
-
 		do {
+			long start = System.currentTimeMillis();
 			boolean change;
 			do {
 				change = simulator.progress();
-			} while (!change && !simulator.complete());
-			Map<Coord, Boolean> coordBooleanMap = simulator.combinedDiscovery();
-			graphics.drawImage(image, 0, 0, null);
-			coordBooleanMap.forEach((k, v) -> image.setRGB(k.getX(), k.getY(), v ? background : wall));
-			simulator.display(graphics);
-			displayFrame.repaint();
+			} while (!change);
+			System.out.printf("next scan calculated in %d ms\n", System.currentTimeMillis() - start);
+			if (DISPLAY) {
+				start = System.currentTimeMillis();
+				graphics.drawImage(originalImage, 0, 0, null);
+				simulator.display(image);
+				displayFrame.repaint();
+			}
 		} while (!simulator.complete());
 		logger.info("Simulation finished!");
 	}

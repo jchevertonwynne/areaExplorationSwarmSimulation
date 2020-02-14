@@ -8,4 +8,8 @@ import java.util.List;
 public class BoundarySearchResult {
     private List<Move> legalMoves;
     private List<Move> blacklistedMoves;
+
+    public boolean movesAvailable() {
+        return legalMoves.size() != 0 || blacklistedMoves.size() != 0;
+    }
 }

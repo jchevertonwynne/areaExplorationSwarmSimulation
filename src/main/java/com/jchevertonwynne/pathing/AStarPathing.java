@@ -4,9 +4,9 @@ import com.jchevertonwynne.structures.Coord;
 import lombok.NonNull;
 import lombok.Value;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
@@ -42,7 +42,7 @@ public class AStarPathing {
                 start.distance(destination),
                 0,
                 start,
-                new LinkedList<>()));
+                new ArrayList<>()));
 
         while (!toTry.isEmpty()) {
             AStarOption nextOption = toTry.poll();
@@ -84,7 +84,7 @@ public class AStarPathing {
                 .map(currTile::combine)
                 .filter(coord -> world.getOrDefault(coord, false))
                 .map(coord -> {
-                    List<Coord> newHistory = new LinkedList<>(history);
+                    List<Coord> newHistory = new ArrayList<>(history);
                     newHistory.add(coord);
                     return new AStarOption(
                             coord.distance(goal),

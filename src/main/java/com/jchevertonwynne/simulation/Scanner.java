@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static com.jchevertonwynne.utils.CircleOperations.generateCircleRays;
+import static com.jchevertonwynne.utils.Common.BROADCAST_RADIUS;
 import static com.jchevertonwynne.utils.Common.SIGHT_RADIUS;
 import static java.util.stream.Collectors.toSet;
 
@@ -24,7 +25,7 @@ public class Scanner {
 
     public Set<SwarmAgent> getOtherLocalAgents() {
         return otherAgents.stream()
-                .filter(otherAgent -> otherAgent.distanceFrom(agent) < SIGHT_RADIUS)
+                .filter(otherAgent -> otherAgent.distanceFrom(agent) < BROADCAST_RADIUS)
                 .collect(toSet());
     }
 
@@ -41,7 +42,7 @@ public class Scanner {
                 boolean pathable;
 
                 try {
-                    pathable = this.world[coord.getX()][coord.getY()];
+                    pathable = world[coord.getX()][coord.getY()];
                     if (!pathable) {
                         edgeSeen = true;
                     }
@@ -50,8 +51,7 @@ public class Scanner {
                     }
 
                     if (!agentWorld.containsKey(coord)) {
-                        agent.noteNewlyDone(new TileStatus(coord, pathable));
-                        agentWorld.put(coord, pathable);
+                        agent.setWorldStatus(new TileStatus(coord, pathable));
                     }
                 }
                 catch (IndexOutOfBoundsException ignored) {

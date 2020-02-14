@@ -20,10 +20,6 @@ public class CircleOperations {
     private static Hashtable<Integer, Set<Coord>> circleEdges = new Hashtable<>();
     private static Hashtable<Integer, List<List<Coord>>> circleRays = new Hashtable<>();
 
-    private CircleOperations() {
-        throw new UnsupportedOperationException("This is a utility class and cannot be instantiated");
-    }
-
     private static Set<Coord> calculateArc(int size) {
         Set<Coord> result = new HashSet<>();
         int a = 0;
