@@ -3,9 +3,9 @@ package com.jchevertonwynne.simulation;
 import com.jchevertonwynne.display.Displayable;
 import com.jchevertonwynne.pathing.PathMediator;
 import com.jchevertonwynne.structures.BoundarySearchResult;
+import com.jchevertonwynne.structures.CircleResult;
 import com.jchevertonwynne.structures.Coord;
 import com.jchevertonwynne.structures.Move;
-import com.jchevertonwynne.structures.TileStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,7 +20,6 @@ import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Random;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import static com.jchevertonwynne.pathing.AStarPathing.calculatePath;
 import static com.jchevertonwynne.pathing.BoundarySearch.calculateBoundaryTiles;
@@ -28,10 +27,12 @@ import static com.jchevertonwynne.utils.CircleOperations.generateCircleRays;
 import static com.jchevertonwynne.utils.Common.RANDOM_BEST_SELECT_LIMIT;
 import static com.jchevertonwynne.utils.Common.RANDOM_SELECTION;
 import static com.jchevertonwynne.utils.Common.SIGHT_RADIUS;
-import static java.lang.Math.log;
 import static java.lang.Math.min;
+import static java.lang.Math.pow;
+import static java.util.Collections.singletonList;
 import static java.util.Comparator.comparingDouble;
 import static java.util.Objects.hash;
+import static java.util.stream.Collectors.toList;
 
 public class SwarmAgent implements Displayable {
     private final Logger logger = LoggerFactory.getLogger(SwarmAgent.class);
@@ -51,7 +52,6 @@ public class SwarmAgent implements Displayable {
     private Map<Coord, Boolean> world = new HashMap<>();
     private List<Coord> currentPath = new ArrayList<>();
 
-    private Map<SwarmAgent, List<TileStatus>> otherAgentsMemo = new HashMap<>();
     private Set<Coord> blackList = new HashSet<>();
     private Set<Coord> whiteList = new HashSet<>();
 
@@ -69,7 +69,6 @@ public class SwarmAgent implements Displayable {
 
     public void initialiseScanner(ScannerFactory scannerFactory) {
         scanner = scannerFactory.instance(this);
-        scanner.getOtherLocalAgents().forEach(agent -> otherAgentsMemo.put(agent, new ArrayList<>()));
     }
 
     public Coord getPosition() {
@@ -84,6 +83,10 @@ public class SwarmAgent implements Displayable {
         return color;
     }
 
+    public void setWorld(Map<Coord, Boolean> newWorld) {
+        world = newWorld;
+    }
+
     public Map<Coord, Boolean> getWorld() {
         return new HashMap<>(world);
     }
@@ -96,36 +99,23 @@ public class SwarmAgent implements Displayable {
         return finished;
     }
 
-    public void shareWorldInfo(List<TileStatus> newInformation) {
-        newInformation.forEach(info -> {
-            Coord tile = info.getCoord();
-            boolean tileStatus = info.isPathable();
-            world.put(tile, tileStatus);
-        });
-    }
-
-    public List<TileStatus> serveNewTileStatuses(SwarmAgent agent) {
-        List<TileStatus> tileStatuses = otherAgentsMemo.get(agent);
-        ArrayList<TileStatus> statusesCopy = new ArrayList<>(tileStatuses);
-        tileStatuses.clear();
-        return statusesCopy;
+    public void receiveWorldInfo(Map<Coord, Boolean> newInformation) {
+        world.putAll(newInformation);
     }
 
     public void shareWithNeighbours(PathMediator mediator) {
         // update all nearby agents with latest world info and get latest from them
-        Set<SwarmAgent> otherLocalAgents = scanner.getOtherLocalAgents();
+        List<SwarmAgent> otherLocalAgents = scanner.getOtherLocalAgents();
         otherLocalAgents.forEach(agent -> {
-            List<TileStatus> tileStatuses = otherAgentsMemo.get(agent);
-            ArrayList<TileStatus> statusesCopy = new ArrayList<>(tileStatuses);
-            tileStatuses.clear();
-            agent.shareWorldInfo(statusesCopy);
-            shareWorldInfo(agent.serveNewTileStatuses(this));
+            Map<Coord, Boolean> w = getWorld();
+            receiveWorldInfo(agent.getWorld());
+            agent.receiveWorldInfo(getWorld());
         });
 
         if (turn > 0) {
-            Set<SwarmAgent> headingSameWay = otherLocalAgents.stream()
+            List<SwarmAgent> headingSameWay = otherLocalAgents.stream()
                     .filter(agent -> agent.getCurrentGoal().distance(currentGoal) < SIGHT_RADIUS)
-                    .collect(Collectors.toSet());
+                    .collect(toList());
             headingSameWay.forEach(other -> mediator.mediate(this, other));
         }
     }
@@ -206,7 +196,7 @@ public class SwarmAgent implements Displayable {
     private double evaluateGoodness(Move move) {
         int discoverable = calculatePotentialNewVisible(move.getTile());
         double distance = move.getDistance();
-        return -(discoverable / log(distance));
+        return discoverable - pow(distance, 0.5);
     }
 
     /**
@@ -215,20 +205,26 @@ public class SwarmAgent implements Displayable {
      * @return number of potentially visible tiles from coord
      */
     private int calculatePotentialNewVisible(Coord coord) {
-        List<List<Coord>> rays = generateCircleRays(coord, SIGHT_RADIUS);
+        CircleResult circleResult = generateCircleRays(coord, SIGHT_RADIUS);
         Set<Coord> seen = new HashSet<>();
         int result = 0;
 
-        for (List<Coord> ray : rays) {
-            for (Coord rayCoord : ray) {
+        List<Coord> coordsToProcess = singletonList(circleResult.getStart());
+        Map<Coord, List<Coord>> rays = circleResult.getRays();
+
+        while (coordsToProcess.size() != 0) {
+            List<Coord> nextToProcess = new ArrayList<>();
+            for (Coord rayCoord : coordsToProcess) {
                 if (!world.getOrDefault(rayCoord, true)) {
-                    break;
+                    continue;
                 }
                 if (seen.add(rayCoord) && !world.containsKey(rayCoord)) {
                     result++;
                 }
             }
+            coordsToProcess = nextToProcess;
         }
+
         return result;
     }
 
@@ -251,9 +247,8 @@ public class SwarmAgent implements Displayable {
         }
     }
 
-    public void setWorldStatus(TileStatus status) {
-        world.put(status.getCoord(), status.isPathable());
-        otherAgentsMemo.forEach((agent, tileStatusList) -> tileStatusList.add(status));
+    public void setWorldStatus(Coord coord, boolean pathable) {
+        world.put(coord, pathable);
     }
 
     public void blacklistCoord(Coord coord) {

@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -45,19 +46,19 @@ public class Simulator implements Displayable {
     }
 
     private ScannerFactory scannerFactory;
-    private Set<SwarmAgent> agents = new HashSet<>();
+    private List<SwarmAgent> agents = new ArrayList<>();
     private Map<Color, Integer> scans = new HashMap<>();
 
     public Simulator(int agentCount, Boolean[][] world) {
         scannerFactory = new ScannerFactory(world, agents);
-
+        Set<SwarmAgent> uniqueAgents = new HashSet<>();
         for (int i = 0; i < agentCount; i++) {
             boolean added;
             do {
-                added = agents.add(randomAgent());
+                added = uniqueAgents.add(randomAgent());
             } while (!added);
         }
-
+        agents.addAll(uniqueAgents);
         agents.forEach(agent -> {
             agent.initialiseScanner(scannerFactory);
             scans.put(agent.getColor(), 0);
@@ -84,7 +85,7 @@ public class Simulator implements Displayable {
         return result;
     }
 
-    private Map<Coord, Boolean> getSemiCommon(Map<Coord, Boolean> combined) {
+    private Map<Coord, Boolean> getSemiCommon() {
         List<Map<Coord, Boolean>> allWorlds = agents.stream().map(SwarmAgent::getWorld).collect(toList());
         Set<Coord> seen = new HashSet<>();
         Map<Coord, Boolean> result = new HashMap<>();
@@ -150,7 +151,7 @@ public class Simulator implements Displayable {
     public void display(BufferedImage image) {
         Graphics graphics = image.getGraphics();
         Map<Coord, Boolean> coordPathableMap = combinedDiscovery();
-        Map<Coord, Boolean> knownByMultiple = getSemiCommon(coordPathableMap);
+        Map<Coord, Boolean> knownByMultiple = getSemiCommon();
         Map<Coord, Boolean> knownByAll = getCommon(coordPathableMap);
         coordPathableMap.forEach((coord, pathable) -> {
             int knownAreaColour;

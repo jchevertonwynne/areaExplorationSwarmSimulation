@@ -1,5 +1,6 @@
 package com.jchevertonwynne.structures;
 
+import com.jchevertonwynne.structures.Move;
 import lombok.Value;
 
 import java.util.List;

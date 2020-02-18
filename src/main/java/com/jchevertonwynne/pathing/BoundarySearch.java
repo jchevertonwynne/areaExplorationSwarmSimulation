@@ -36,7 +36,6 @@ public class BoundarySearch {
     private List<Move> legalResults = new ArrayList<>();
     private List<Move> blacklistedResults = new ArrayList<>();
 
-
     private BoundarySearch(Coord position, Map<Coord, Boolean> world, Set<Coord> blacklist) {
         this.position = position;
         this.world = world;

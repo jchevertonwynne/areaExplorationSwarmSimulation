@@ -62,7 +62,6 @@ public class Main {
 			} while (!change);
 			System.out.printf("next scan calculated in %d ms\n", System.currentTimeMillis() - start);
 			if (DISPLAY) {
-				start = System.currentTimeMillis();
 				graphics.drawImage(originalImage, 0, 0, null);
 				simulator.display(image);
 				displayFrame.repaint();

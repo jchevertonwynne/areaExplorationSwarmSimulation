@@ -1,11 +1,15 @@
 package com.jchevertonwynne.utils;
 
+import com.jchevertonwynne.structures.CircleResult;
 import com.jchevertonwynne.structures.Coord;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import static java.lang.Integer.compare;
@@ -13,12 +17,13 @@ import static java.lang.Math.PI;
 import static java.lang.Math.abs;
 import static java.lang.Math.atan2;
 import static java.lang.Math.pow;
+import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 
 public class CircleOperations {
     private static Hashtable<Integer, Set<Coord>> circleEdges = new Hashtable<>();
-    private static Hashtable<Integer, List<List<Coord>>> circleRays = new Hashtable<>();
+    private static Hashtable<Integer, CircleResult> circleRays = new Hashtable<>();
 
     private static Set<Coord> calculateArc(int size) {
         Set<Coord> result = new HashSet<>();
@@ -63,7 +68,7 @@ public class CircleOperations {
 
     private static List<Coord> calculateRay(Coord end) {
         Coord start = new Coord(0, 0);
-        List<Coord> result = new ArrayList<>();
+        List<Coord> result = new LinkedList<>();
         double targetAngle = angleBetween(start, end);
         int dx = compare(end.getX() - start.getX(), 0);
         int dy = compare(end.getY() - start.getY(), 0);
@@ -80,18 +85,40 @@ public class CircleOperations {
         return result;
     }
 
-    public static List<List<Coord>> generateCircleRays(Coord centre, int size) {
+    public static CircleResult generateCircleRays(Coord centre, int size) {
+        Coord start = new Coord(0, 0);
         circleRays.computeIfAbsent(
                 size,
-                radius -> baseCircle(radius).stream()
-                        .map(CircleOperations::calculateRay)
-                        .collect(toList())
+                radius -> {
+                    Map<Coord, List<Coord>> circleResultMap = new HashMap<>();
+                    Set<Coord> edges = baseCircle(radius);
+                    edges.stream().map(CircleOperations::calculateRay).forEach(ray -> {
+                        Coord first;
+                        Coord second = start;
+                        for (Coord coord : ray) {
+                            first = second;
+                            second = coord;
+                            if (!circleResultMap.containsKey(first)) {
+                                circleResultMap.put(first, new ArrayList<>());
+                            }
+                            circleResultMap.get(first).add(second);
+                        }
+                        circleResultMap.put(second, emptyList());
+                    });
+                    return new CircleResult(start, circleResultMap);
+                }
         );
-        return circleRays.get(size).stream()
-                .map(rayLine -> rayLine.stream()
-                        .map(rayTile -> rayTile.combine(centre))
-                        .collect(toList()))
-                .collect(toList());
+        CircleResult circleBase = circleRays.get(size);
+        Map<Coord, List<Coord>> resultRays = new HashMap<>();
+        circleBase.getRays().forEach((c, lc) -> {
+            Coord modifiedCoord = c.combine(centre);
+            List<Coord> modifiedList = lc.stream().map(r -> r.combine(centre)).collect(toList());
+            resultRays.put(modifiedCoord, modifiedList);
+        });
+        return new CircleResult(
+                circleBase.getStart().combine(centre),
+                resultRays
+        );
     }
 
     public static Coord mostSimilarAngle(Coord a, Coord b, Coord goal, double targetAngle) {

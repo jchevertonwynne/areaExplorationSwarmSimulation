@@ -21,11 +21,9 @@ public class PathMediator {
             return;
         }
 
-        logger.info("Mediating pathing between agent {} and agent {}", a, b);
-        double aDistanceToGoal = a.distanceToGoal();
-        double bDistanceToGoal = b.distanceToGoal();
+//        logger.info("Mediating pathing between agent {} and agent {}", a, b);
 
-        if (aDistanceToGoal < bDistanceToGoal) {
+        if (a.distanceToGoal() < b.distanceToGoal()) {
             logger.info("Agent {} continuing, agent {} to make new choice of move", a, b);
             Coord toBan = a.getCurrentGoal();
             b.blacklistCoord(toBan);
