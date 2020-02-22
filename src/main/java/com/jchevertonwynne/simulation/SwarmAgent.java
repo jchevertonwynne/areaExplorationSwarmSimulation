@@ -9,26 +9,16 @@ import com.jchevertonwynne.structures.TileStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.awt.Color;
-import java.awt.Graphics;
+import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.PriorityQueue;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.jchevertonwynne.pathing.AStarPathing.calculatePath;
 import static com.jchevertonwynne.pathing.BoundarySearch.calculateBoundaryTiles;
 import static com.jchevertonwynne.utils.CircleOperations.generateCircleRays;
-import static com.jchevertonwynne.utils.Common.RANDOM_BEST_SELECT_LIMIT;
-import static com.jchevertonwynne.utils.Common.RANDOM_SELECTION;
-import static com.jchevertonwynne.utils.Common.SIGHT_RADIUS;
-import static java.lang.Math.log;
+import static com.jchevertonwynne.utils.Common.*;
 import static java.lang.Math.min;
 import static java.util.Comparator.comparingDouble;
 import static java.util.Objects.hash;
@@ -111,7 +101,7 @@ public class SwarmAgent implements Displayable {
         return statusesCopy;
     }
 
-    public void shareWithNeighbours(PathMediator mediator) {
+    public boolean shareWithNeighbours(PathMediator mediator) {
         // update all nearby agents with latest world info and get latest from them
         Set<SwarmAgent> otherLocalAgents = scanner.getOtherLocalAgents();
         otherLocalAgents.forEach(agent -> {
@@ -122,12 +112,17 @@ public class SwarmAgent implements Displayable {
             shareWorldInfo(agent.serveNewTileStatuses(this));
         });
 
+        boolean repathed = false;
         if (turn > 0) {
             Set<SwarmAgent> headingSameWay = otherLocalAgents.stream()
                     .filter(agent -> agent.getCurrentGoal().distance(currentGoal) < SIGHT_RADIUS)
                     .collect(Collectors.toSet());
-            headingSameWay.forEach(other -> mediator.mediate(this, other));
+
+            for (SwarmAgent swarmAgent : headingSameWay) {
+                repathed |= mediator.mediate(this, swarmAgent);
+            }
         }
+        return repathed;
     }
 
     public void processTurn() {
@@ -204,9 +199,10 @@ public class SwarmAgent implements Displayable {
      * @return double Arbitrary score number of goodness
      */
     private double evaluateGoodness(Move move) {
-        int discoverable = calculatePotentialNewVisible(move.getTile());
-        double distance = move.getDistance();
-        return -(discoverable / log(distance));
+        return move.getDistance();
+//        int discoverable = calculatePotentialNewVisible(move.getTile());
+//        double distance = move.getDistance();
+//        return -(discoverable / log(distance));
     }
 
     /**
@@ -256,11 +252,13 @@ public class SwarmAgent implements Displayable {
         otherAgentsMemo.forEach((agent, tileStatusList) -> tileStatusList.add(status));
     }
 
-    public void blacklistCoord(Coord coord) {
+    public boolean blacklistCoord(Coord coord) {
         if (!whiteList.contains(coord)) {
             blackList.add(coord);
             mediated = true;
+            return true;
         }
+        return false;
     }
 
     public void clearCurrentPath() {

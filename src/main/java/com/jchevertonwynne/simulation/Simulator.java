@@ -118,17 +118,23 @@ public class Simulator implements Displayable {
      */
     public boolean progress() {
         PathMediator pathMediator = new PathMediator();
-        agents.forEach(agent -> agent.shareWithNeighbours(pathMediator));
+        boolean repathed;
+        do {
+            repathed = false;
+            for (SwarmAgent agent : agents) {
+                repathed |= agent.shareWithNeighbours(pathMediator);
+            }
 
-        ExecutorService threadManager = Executors.newCachedThreadPool();
-        agents.forEach(a -> threadManager.execute(new AgentHandlerThread(a)));
+            ExecutorService threadManager = Executors.newCachedThreadPool();
+            agents.forEach(a -> threadManager.execute(new AgentHandlerThread(a)));
 
-        threadManager.shutdown();
-        try {
-            threadManager.awaitTermination(5, TimeUnit.MINUTES);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+            threadManager.shutdown();
+            try {
+                threadManager.awaitTermination(5, TimeUnit.MINUTES);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        } while (repathed);
 
         boolean newlyScanned = false;
         for (SwarmAgent agent : agents) {

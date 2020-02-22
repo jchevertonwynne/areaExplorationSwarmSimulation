@@ -4,13 +4,7 @@ import com.jchevertonwynne.structures.Coord;
 import lombok.NonNull;
 import lombok.Value;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.PriorityQueue;
-import java.util.Set;
+import java.util.*;
 
 import static com.jchevertonwynne.structures.Coord.CARDINAL_DIRECTIONS;
 import static java.lang.String.format;
@@ -26,7 +20,7 @@ public class AStarPathing {
         private @NonNull List<Coord> history;
     }
 
-    private static Comparator<AStarOption> AStarOptionComparator = comparingDouble(aStarOption -> aStarOption.actualDistance + aStarOption.distanceEstimate);
+    private static Comparator<AStarOption> aStarOptionComparator = comparingDouble(aStarOption -> aStarOption.getActualDistance() + aStarOption.getDistanceEstimate());
 
     /**
      * A* to path from current position to destination
@@ -37,7 +31,7 @@ public class AStarPathing {
         Set<Coord> seen = new HashSet<>();
         seen.add(start);
 
-        PriorityQueue<AStarOption> toTry = new PriorityQueue<>(AStarOptionComparator);
+        PriorityQueue<AStarOption> toTry = new PriorityQueue<>(aStarOptionComparator);
         toTry.add(new AStarOption(
                 start.distance(destination),
                 0,
@@ -47,11 +41,11 @@ public class AStarPathing {
         while (!toTry.isEmpty()) {
             AStarOption nextOption = toTry.poll();
             List<AStarOption> nextOptions = evaluateChoices(nextOption, destination, world);
-            for (AStarOption aStarOption : nextOptions) {
-                Coord tile = aStarOption.getTile();
-                if (tile.equals(destination)) {
-                    return aStarOption.getHistory();
-                }
+            Optional<AStarOption> result = nextOptions.stream()
+                    .filter(option -> option.getTile().equals(destination))
+                    .findFirst();
+            if (result.isPresent()) {
+                return result.get().getHistory();
             }
             nextOptions.stream()
                     .filter(aStarOption -> !seen.contains(aStarOption.getTile()))
