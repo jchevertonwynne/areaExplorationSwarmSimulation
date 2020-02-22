@@ -213,6 +213,7 @@ public class SwarmAgent implements Displayable {
         Map<Coord, List<Coord>> rays = circleResult.getRays();
 
         while (coordsToProcess.size() != 0) {
+
             List<Coord> nextToProcess = new ArrayList<>();
             for (Coord rayCoord : coordsToProcess) {
                 if (!world.getOrDefault(rayCoord, true)) {
