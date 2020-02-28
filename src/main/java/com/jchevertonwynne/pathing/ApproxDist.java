@@ -11,6 +11,8 @@ import java.util.*;
 import static java.util.Comparator.comparingDouble;
 
 public class ApproxDist {
+    private static Set<CoordPair> knownTenDist = new HashSet<>();
+
     @Value
     private static class ApproxAStarOption {
         private double distanceEstimate;
@@ -105,9 +107,11 @@ public class ApproxDist {
         PriorityQueue<ApproxAStarOption> queue = new PriorityQueue<>(approxAStarOptionComparator);
 
         onConnection.forEach(on -> {
-            int dist = AStarPathing.calculatePath(start, on, world).size();
-            ApproxAStarOption startOption = new ApproxAStarOption(on.distance(end), dist, on);
-            queue.add(startOption);
+            if (world.getOrDefault(on, false)) {
+                int dist = AStarPathing.calculatePath(start, on, world).size();
+                ApproxAStarOption startOption = new ApproxAStarOption(on.distance(end), dist, on);
+                queue.add(startOption);
+            }
         });
 
         while (!queue.isEmpty()) {
@@ -120,8 +124,20 @@ public class ApproxDist {
             }
             List<Coord> nearby = neighbourBases(tile);
             nearby.forEach(near -> {
-                try {
+                CoordPair jump = new CoordPair(tile, near);
+                if (knownTenDist.contains(jump)) {
+                    ApproxAStarOption next = new ApproxAStarOption(
+                            near.distance(end),
+                            currentDist + 10,
+                            near
+                    );
+                    queue.add(next);
+                }
+                else if (world.getOrDefault(near, false)) {
                     int estDist = AStarPathing.calculatePath(tile, near, world).size();
+                    if (estDist == 10) {
+                        knownTenDist.add(jump);
+                    }
                     ApproxAStarOption next = new ApproxAStarOption(
                             near.distance(end),
                             currentDist + estDist,
@@ -129,7 +145,6 @@ public class ApproxDist {
                     );
                     queue.add(next);
                 }
-                catch (IllegalArgumentException ignored) { }
             });
         }
 

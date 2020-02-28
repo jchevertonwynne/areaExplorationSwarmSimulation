@@ -19,11 +19,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import static com.jchevertonwynne.utils.Common.ALL_KNOWN_PATH_COLOUR;
 import static com.jchevertonwynne.utils.Common.ALL_KNOWN_WALL_COLOUR;
-import static com.jchevertonwynne.utils.Common.KNOWN_PATH_COLOUR;
 import static com.jchevertonwynne.utils.Common.KNOWN_WALL_COLOUR;
-import static com.jchevertonwynne.utils.Common.SOME_KNOWN_PATH_COLOUR;
 import static com.jchevertonwynne.utils.Common.SOME_KNOWN_WALL_COLOUR;
 import static com.jchevertonwynne.utils.Common.START_POSITION;
 import static java.util.stream.Collectors.toList;
@@ -155,25 +152,28 @@ public class Simulator implements Displayable {
     @Override
     public void display(BufferedImage image) {
         Graphics graphics = image.getGraphics();
+        Map<Coord, Integer> distances = new HashMap<>();
+        for (SwarmAgent agent : agents) {
+            distances.putAll(agent.getDistances());
+        }
         Map<Coord, Boolean> coordPathableMap = combinedDiscovery();
         Map<Coord, Boolean> knownByMultiple = getSemiCommon(coordPathableMap);
         Map<Coord, Boolean> knownByAll = getCommon(coordPathableMap);
         coordPathableMap.forEach((coord, pathable) -> {
             int knownAreaColour;
             if (knownByAll.containsKey(coord)) {
-                knownAreaColour = pathable ? ALL_KNOWN_PATH_COLOUR : ALL_KNOWN_WALL_COLOUR;
+                knownAreaColour = pathable ? new Color(0, 255, distances.get(coord) % 256).getRGB() : ALL_KNOWN_WALL_COLOUR;
             }
             else if (knownByMultiple.containsKey(coord)) {
-                knownAreaColour = pathable ? SOME_KNOWN_PATH_COLOUR : SOME_KNOWN_WALL_COLOUR;
+                knownAreaColour = pathable ? new Color(255, 0, distances.get(coord) % 256).getRGB() : SOME_KNOWN_WALL_COLOUR;
             }
             else {
-                knownAreaColour = pathable ? KNOWN_PATH_COLOUR : KNOWN_WALL_COLOUR;
+                knownAreaColour = pathable ? new Color(distances.get(coord) % 256, 255, 0).getRGB() : KNOWN_WALL_COLOUR;
             }
+
             image.setRGB(coord.getX(), coord.getY(), knownAreaColour);
         });
         agents.forEach(swarmAgent -> swarmAgent.display(image));
         graphics.dispose();
     }
-
-
 }

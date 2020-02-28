@@ -13,14 +13,14 @@ import static java.util.stream.Collectors.toList;
 
 public class AStarPathing {
     @Value
-    private static class AStarOption {
+    private static class AStarPathOption {
         private double distanceEstimate;
         private int actualDistance;
         private @NonNull Coord tile;
         private @NonNull List<Coord> history;
     }
 
-    private static Comparator<AStarOption> aStarOptionComparator = comparingDouble(aStarOption -> aStarOption.getActualDistance() + aStarOption.getDistanceEstimate());
+    private static Comparator<AStarPathOption> aStarOptionComparator = comparingDouble(aStarPathOption -> aStarPathOption.getActualDistance() + aStarPathOption.getDistanceEstimate());
 
     /**
      * A* to path from current position to destination
@@ -31,27 +31,27 @@ public class AStarPathing {
         Set<Coord> seen = new HashSet<>();
         seen.add(start);
 
-        PriorityQueue<AStarOption> toTry = new PriorityQueue<>(aStarOptionComparator);
-        toTry.add(new AStarOption(
+        PriorityQueue<AStarPathOption> toTry = new PriorityQueue<>(aStarOptionComparator);
+        toTry.add(new AStarPathOption(
                 start.distance(destination),
                 0,
                 start,
                 new ArrayList<>()));
 
         while (!toTry.isEmpty()) {
-            AStarOption nextOption = toTry.poll();
-            List<AStarOption> nextOptions = evaluateChoices(nextOption, destination, world);
-            Optional<AStarOption> result = nextOptions.stream()
+            AStarPathOption nextOption = toTry.poll();
+            List<AStarPathOption> nextOptions = evaluateChoices(nextOption, destination, world);
+            Optional<AStarPathOption> result = nextOptions.stream()
                     .filter(option -> option.getTile().equals(destination))
                     .findFirst();
             if (result.isPresent()) {
                 return result.get().getHistory();
             }
             nextOptions.stream()
-                    .filter(aStarOption -> !seen.contains(aStarOption.getTile()))
-                    .forEach(aStarOption -> {
-                        toTry.add(aStarOption);
-                        seen.add(aStarOption.getTile());
+                    .filter(aStarPathOption -> !seen.contains(aStarPathOption.getTile()))
+                    .forEach(aStarPathOption -> {
+                        toTry.add(aStarPathOption);
+                        seen.add(aStarPathOption.getTile());
                     });
         }
         throw new IllegalArgumentException(
@@ -65,14 +65,14 @@ public class AStarPathing {
 
     /**
      * From a tile, find all not checked neighbour tiles
-     * @param aStarOption Current A* state
+     * @param aStarPathOption Current A* state
      * @param goal Destination
      * @return Unchecked neighbour A* states
      */
-    private static List<AStarOption> evaluateChoices(AStarOption aStarOption, Coord goal, Map<Coord, Boolean> world) {
-        int currDist = aStarOption.getActualDistance();
-        Coord currTile = aStarOption.getTile();
-        List<Coord> history = aStarOption.getHistory();
+    private static List<AStarPathOption> evaluateChoices(AStarPathOption aStarPathOption, Coord goal, Map<Coord, Boolean> world) {
+        int currDist = aStarPathOption.getActualDistance();
+        Coord currTile = aStarPathOption.getTile();
+        List<Coord> history = aStarPathOption.getHistory();
 
         return CARDINAL_DIRECTIONS.stream()
                 .map(currTile::combine)
@@ -80,7 +80,7 @@ public class AStarPathing {
                 .map(coord -> {
                     List<Coord> newHistory = new ArrayList<>(history);
                     newHistory.add(coord);
-                    return new AStarOption(
+                    return new AStarPathOption(
                             coord.distance(goal),
                             currDist + 1,
                             coord,
