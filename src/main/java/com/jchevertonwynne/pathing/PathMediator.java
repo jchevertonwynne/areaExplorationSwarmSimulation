@@ -8,14 +8,12 @@ import org.slf4j.LoggerFactory;
 import java.util.HashSet;
 import java.util.Set;
 
-import static java.util.Objects.hash;
-
 public class PathMediator {
     private static Logger logger = LoggerFactory.getLogger(PathMediator.class);
     private Set<Integer> checked = new HashSet<>();
 
     public boolean mediate(SwarmAgent a, SwarmAgent b) {
-        int combinedHash = hash(a.hashCode(), b.hashCode());
+        int combinedHash = a.hashCode() ^ b.hashCode();
 
         if (checked.contains(combinedHash)) {
             return false;

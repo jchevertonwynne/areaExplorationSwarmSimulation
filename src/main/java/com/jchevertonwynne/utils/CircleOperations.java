@@ -61,7 +61,7 @@ public class CircleOperations {
         return atan2(dy, dx);
     }
 
-    private static List<Coord> calculateRay(Coord end) {
+    public static List<Coord> calculateRay(Coord end) {
         Coord start = new Coord(0, 0);
         List<Coord> result = new ArrayList<>();
         double targetAngle = angleBetween(start, end);

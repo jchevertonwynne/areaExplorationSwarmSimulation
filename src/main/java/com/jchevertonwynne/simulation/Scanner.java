@@ -24,6 +24,7 @@ public class Scanner {
     }
 
     public Set<SwarmAgent> getOtherLocalAgents() {
+        Map<Coord, Boolean> knownWorld = agent.getWorld();
         return otherAgents.stream()
                 .filter(otherAgent -> otherAgent.distanceFrom(agent) < BROADCAST_RADIUS)
                 .collect(toSet());

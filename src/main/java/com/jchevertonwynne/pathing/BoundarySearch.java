@@ -13,8 +13,6 @@ import java.util.Map;
 import java.util.Set;
 
 import static com.jchevertonwynne.structures.Coord.CARDINAL_DIRECTIONS;
-import static com.jchevertonwynne.utils.Common.DFS_MAX_TURNS_WITHOUT_FIND;
-import static com.jchevertonwynne.utils.Common.DFS_SOFT_LIST_RETURN_LIMIT;
 import static com.jchevertonwynne.utils.Common.SIGHT_RADIUS;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
@@ -31,7 +29,6 @@ public class BoundarySearch {
     private Set<Coord> blacklist;
     private Set<Coord> resultTiles = new HashSet<>();
     private Set<Coord> seen = new HashSet<>();
-    private int turnsWithoutFind = 0;
     private int distance = 0;
     private List<Move> legalResults = new ArrayList<>();
     private List<Move> blacklistedResults = new ArrayList<>();
@@ -57,12 +54,8 @@ public class BoundarySearch {
         toCheck.add(new MoveHistory(position, position));
         seen.add(position);
 
-        while (!toCheck.isEmpty() && legalResults.size() < DFS_SOFT_LIST_RETURN_LIMIT) {
-            if (!legalResults.isEmpty() && turnsWithoutFind > DFS_MAX_TURNS_WITHOUT_FIND) {
-                return result;
-            }
+        while (!toCheck.isEmpty()) {
             distance++;
-            turnsWithoutFind++;
 
             List<MoveHistory> nextAvailable = toCheck.stream()
                     .map(MoveHistory::getCurrentTile)
@@ -94,7 +87,6 @@ public class BoundarySearch {
                 List<Move> listToAddTo = closeToBlacklist ? blacklistedResults : legalResults;
                 listToAddTo.add(new Move(previousTile, distance));
                 resultTiles.add(previousTile);
-                turnsWithoutFind = 0;
             }
         });
 

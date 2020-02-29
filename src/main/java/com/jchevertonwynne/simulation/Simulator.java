@@ -19,10 +19,15 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import static com.jchevertonwynne.utils.Common.ALL_KNOWN_PATH_COLOUR;
 import static com.jchevertonwynne.utils.Common.ALL_KNOWN_WALL_COLOUR;
+import static com.jchevertonwynne.utils.Common.DISTANCE_DISPLAY;
+import static com.jchevertonwynne.utils.Common.KNOWN_PATH_COLOUR;
 import static com.jchevertonwynne.utils.Common.KNOWN_WALL_COLOUR;
+import static com.jchevertonwynne.utils.Common.SOME_KNOWN_PATH_COLOUR;
 import static com.jchevertonwynne.utils.Common.SOME_KNOWN_WALL_COLOUR;
 import static com.jchevertonwynne.utils.Common.START_POSITION;
+import static java.lang.Math.min;
 import static java.util.stream.Collectors.toList;
 
 public class Simulator implements Displayable {
@@ -81,29 +86,23 @@ public class Simulator implements Displayable {
         return result;
     }
 
-    private Map<Coord, Boolean> getSemiCommon(Map<Coord, Boolean> combined) {
+    private Set<Coord> getSemiCommon(Map<Coord, Boolean> combined) {
+        Set<Coord> result = new HashSet<>();
         List<Map<Coord, Boolean>> allWorlds = agents.stream().map(SwarmAgent::getWorld).collect(toList());
-        Set<Coord> seen = new HashSet<>();
-        Map<Coord, Boolean> result = new HashMap<>();
         for (Map<Coord, Boolean> world : allWorlds) {
-            world.forEach((coord, pathable) -> {
-                if (seen.contains(coord)) {
-                    result.put(coord, pathable);
-                }
-                else {
-                    seen.add(coord);
-                }
-            });
+            result.addAll(world.keySet());
         }
         return result;
     }
 
-    private Map<Coord, Boolean> getCommon(Map<Coord, Boolean> combined) {
-        List<Map<Coord, Boolean>> allWorlds = agents.stream().map(SwarmAgent::getWorld).collect(toList());
-        Map<Coord, Boolean> result = new HashMap<>();
+    private Set<Coord> getCommon(Map<Coord, Boolean> combined) {
+        List<Map<Coord, Boolean>> allWorlds = agents.stream()
+                .map(SwarmAgent::getWorld)
+                .collect(toList());
+        Set<Coord> result = new HashSet<>();
         combined.forEach((coord, pathable) -> {
             if (allWorlds.stream().allMatch(world -> world.containsKey(coord))) {
-                result.put(coord, pathable);
+                result.add(coord);
             }
         });
         return result;
@@ -131,7 +130,7 @@ public class Simulator implements Displayable {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-        } while (repathed);
+        } while (repathed && !complete());
 
         boolean newlyScanned = false;
         for (SwarmAgent agent : agents) {
@@ -153,22 +152,42 @@ public class Simulator implements Displayable {
     public void display(BufferedImage image) {
         Graphics graphics = image.getGraphics();
         Map<Coord, Integer> distances = new HashMap<>();
-        for (SwarmAgent agent : agents) {
-            distances.putAll(agent.getDistances());
+        if (DISTANCE_DISPLAY) {
+            for (SwarmAgent agent : agents) {
+                Map<Coord, Integer> agentDistances = agent.getDistances();
+                agentDistances.forEach((c, d) -> {
+                    int distance = distances.getOrDefault(c, Integer.MAX_VALUE);
+                    distances.put(c, min(distance, d));
+                });
+            }
         }
+
         Map<Coord, Boolean> coordPathableMap = combinedDiscovery();
-        Map<Coord, Boolean> knownByMultiple = getSemiCommon(coordPathableMap);
-        Map<Coord, Boolean> knownByAll = getCommon(coordPathableMap);
+        Set<Coord> knownByMultiple = getSemiCommon(coordPathableMap);
+        Set<Coord> knownByAll = getCommon(coordPathableMap);
         coordPathableMap.forEach((coord, pathable) -> {
             int knownAreaColour;
-            if (knownByAll.containsKey(coord)) {
-                knownAreaColour = pathable ? new Color(0, 255, distances.get(coord) % 256).getRGB() : ALL_KNOWN_WALL_COLOUR;
-            }
-            else if (knownByMultiple.containsKey(coord)) {
-                knownAreaColour = pathable ? new Color(255, 0, distances.get(coord) % 256).getRGB() : SOME_KNOWN_WALL_COLOUR;
+            if (DISTANCE_DISPLAY) {
+                if (knownByAll.contains(coord)) {
+                    knownAreaColour = pathable ? new Color(0, 255, distances.get(coord) % 256).getRGB() : ALL_KNOWN_WALL_COLOUR;
+                }
+                else if (knownByMultiple.contains(coord)) {
+                    knownAreaColour = pathable ? new Color(distances.get(coord) % 256, 0, 255).getRGB() : SOME_KNOWN_WALL_COLOUR;
+                }
+                else {
+                    knownAreaColour = pathable ? new Color(255, distances.get(coord) % 256, 0).getRGB() : KNOWN_WALL_COLOUR;
+                }
             }
             else {
-                knownAreaColour = pathable ? new Color(distances.get(coord) % 256, 255, 0).getRGB() : KNOWN_WALL_COLOUR;
+                if (knownByAll.contains(coord)) {
+                    knownAreaColour = pathable ? ALL_KNOWN_PATH_COLOUR : ALL_KNOWN_WALL_COLOUR;
+                }
+                else if (knownByMultiple.contains(coord)) {
+                    knownAreaColour = pathable ? SOME_KNOWN_PATH_COLOUR : SOME_KNOWN_WALL_COLOUR;
+                }
+                else {
+                    knownAreaColour = pathable ? KNOWN_PATH_COLOUR : KNOWN_WALL_COLOUR;
+                }
             }
 
             image.setRGB(coord.getX(), coord.getY(), knownAreaColour);
