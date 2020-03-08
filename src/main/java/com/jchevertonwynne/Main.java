@@ -53,7 +53,6 @@ public class Main {
 		}
 
 		logger.info("Commencing exploration of {}", BACKGROUND_NAME);
-
 		do {
 			long start = System.currentTimeMillis();
 			boolean change;

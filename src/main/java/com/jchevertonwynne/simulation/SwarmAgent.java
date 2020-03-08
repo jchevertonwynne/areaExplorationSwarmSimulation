@@ -19,6 +19,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import static com.jchevertonwynne.pathing.AStarPathing.calculatePath;
@@ -32,6 +33,7 @@ import static java.util.Collections.singleton;
 import static java.util.Comparator.comparingDouble;
 import static java.util.Objects.hash;
 import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
 
 public class SwarmAgent implements Displayable {
@@ -53,6 +55,8 @@ public class SwarmAgent implements Displayable {
     private Map<Coord, Integer> distanceFromStart = new HashMap<>();
     private List<Coord> currentPath = new ArrayList<>();
 
+    private Map<SwarmAgent, Set<Coord>> shareCache = new HashMap<>();
+
     private Set<Coord> blackList = new HashSet<>();
     private Set<Coord> whiteList = new HashSet<>();
 
@@ -67,6 +71,7 @@ public class SwarmAgent implements Displayable {
 
     public void initialiseScanner(ScannerFactory scannerFactory) {
         scanner = scannerFactory.instance(this);
+        scanner.getOtherLocalAgents().forEach(agent -> shareCache.put(agent, new HashSet<>()));
     }
 
     public Coord getPosition() {
@@ -98,18 +103,29 @@ public class SwarmAgent implements Displayable {
     }
 
     public void shareWorldInfo(Map<Coord, Boolean> newInformation) {
-        world.putAll(newInformation);
+        if (newInformation.size() > 0) {
+            world.putAll(newInformation);
+            reflowDistances();
+        }
+    }
+
+    public Map<Coord, Boolean> getToShare(SwarmAgent agent) {
+        Set<Coord> coords = shareCache.get(agent);
+        Map<Coord, Boolean> coordsToShare = coords
+                .stream()
+                .collect(toMap(c -> c, world::get));
+        coords.clear();
+        return coordsToShare;
     }
 
     public boolean shareWithNeighbours(PathMediator mediator) {
-        if (finished) return false;
+        if (finished || Objects.equals(startPosition, currentGoal)) return false;
 
         // update all nearby agents with latest world info and get latest from them
-        int worldSize = world.size();
         Set<SwarmAgent> otherLocalAgents = scanner.getOtherLocalAgents();
         otherLocalAgents.forEach(agent -> {
-            agent.shareWorldInfo(getWorld());
-            shareWorldInfo(agent.getWorld());
+            agent.shareWorldInfo(getToShare(agent));
+            shareWorldInfo(agent.getToShare(this));
         });
 
         boolean repathed = false;
@@ -143,15 +159,14 @@ public class SwarmAgent implements Displayable {
     }
 
     private void chooseNextMove(BoundarySearchResult boundarySearchResult) {
-        logger.info("Agent {} scanning at {}", this,  position);
         if (mediated) {
             mediated = false;
         }
         else {
+            logger.info("Agent {} scanning at {}", this,  position);
             scanArea();
+            reflowDistances();
         }
-
-        reflowDistances();
 
         List<Move> legalMoves = boundarySearchResult.getLegalMoves();
 
@@ -166,7 +181,7 @@ public class SwarmAgent implements Displayable {
                 Coord tile = chooseNextMove(blacklistedMoves);
                 blackList.remove(tile);
                 whiteList.add(tile);
-                logger.info("Agent {} now moving to {}", this, tile.toString());
+                logger.info("Agent {} white listing and going to {}", this, tile.toString());
                 currentPath = calculatePath(position, tile, world);
             }
             else {
@@ -215,10 +230,10 @@ public class SwarmAgent implements Displayable {
         Set<Coord> seen = new HashSet<>();
         int result = 0;
 
-        boolean skip = false;
+        int loop = 0;
         for (List<Coord> ray : rays) {
-            skip = !skip;
-            if (skip) continue;
+            loop++;
+            if (loop % 4 != 0) continue;;
             for (Coord rayCoord : ray) {
                 if (!world.getOrDefault(rayCoord, true)) {
                     break;
@@ -228,7 +243,7 @@ public class SwarmAgent implements Displayable {
                 }
             }
         }
-        return result;
+        return (int) (result * 2.3);
     }
 
     /**
@@ -274,10 +289,10 @@ public class SwarmAgent implements Displayable {
         }
     }
 
-
     public void setWorldStatus(TileStatus status) {
         Coord coord = status.getCoord();
         world.put(coord, status.isPathable());
+        shareCache.forEach((agent, toShare) -> toShare.add(coord));
     }
 
     public boolean blacklistCoord(Coord coord) {
