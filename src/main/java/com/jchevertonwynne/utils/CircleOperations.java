@@ -89,7 +89,7 @@ public class CircleOperations {
         );
         return circleRays.get(size).stream()
                 .map(rayLine -> rayLine.stream()
-                        .map(rayTile -> rayTile.combine(centre))
+                        .map(centre::combine)
                         .collect(toList()))
                 .collect(toList());
     }

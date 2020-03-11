@@ -3,12 +3,14 @@ package com.jchevertonwynne.simulation;
 import com.jchevertonwynne.structures.Coord;
 import com.jchevertonwynne.structures.TileStatus;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import static com.jchevertonwynne.utils.CircleOperations.generateCircleRays;
 import static com.jchevertonwynne.utils.Common.BROADCAST_RADIUS;
+import static com.jchevertonwynne.utils.Common.GLOBAL_KNOWLEDGE;
 import static com.jchevertonwynne.utils.Common.SIGHT_RADIUS;
 import static java.util.stream.Collectors.toSet;
 
@@ -24,10 +26,15 @@ public class Scanner {
     }
 
     public Set<SwarmAgent> getOtherLocalAgents() {
-        Map<Coord, Boolean> knownWorld = agent.getWorld();
-        return otherAgents.stream()
-                .filter(otherAgent -> otherAgent.distanceFrom(agent) < BROADCAST_RADIUS)
-                .collect(toSet());
+        if (GLOBAL_KNOWLEDGE) {
+            return new HashSet<>(otherAgents);
+        }
+        else {
+            Map<Coord, Boolean> knownWorld = agent.getWorld();
+            return otherAgents.stream()
+                    .filter(otherAgent -> otherAgent.distanceFrom(agent) < BROADCAST_RADIUS)
+                    .collect(toSet());
+        }
     }
 
     /**

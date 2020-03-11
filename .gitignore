@@ -4,4 +4,4 @@ out/
 target/
 simulation.log
 imageOutput/*.png
-
+*.swp

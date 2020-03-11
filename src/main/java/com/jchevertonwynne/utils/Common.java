@@ -5,7 +5,7 @@ import com.jchevertonwynne.structures.Coord;
 import java.awt.Color;
 
 public class Common {
-    public static final String BACKGROUND_NAME = "areas/mazeMedium.png";
+    public static final String BACKGROUND_NAME = "areas/mazeSmall.png";
     public static final Coord START_POSITION = new Coord(20, 20);
 
     public static final boolean DISPLAY = true;
@@ -22,7 +22,8 @@ public class Common {
     public static final int DFS_MAX_TURNS_WITHOUT_FIND = 400;
     public static final int DFS_RETURN_SOFT_CAP = 400;
 
-    public static final int AGENT_COUNT = 1;
+    public static final boolean GLOBAL_KNOWLEDGE = false;
+    public static final int AGENT_COUNT = 4;
     public static final int SIGHT_RADIUS = 30;
     public static final int BROADCAST_RADIUS = 60;
 }

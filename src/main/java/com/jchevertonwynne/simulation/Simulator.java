@@ -120,10 +120,8 @@ public class Simulator implements Displayable {
             for (SwarmAgent agent : agents) {
                 repathed |= agent.shareWithNeighbours(pathMediator);
             }
-
             ExecutorService threadManager = Executors.newCachedThreadPool();
             agents.forEach(a -> threadManager.execute(new AgentHandlerThread(a)));
-
             threadManager.shutdown();
             try {
                 threadManager.awaitTermination(5, TimeUnit.MINUTES);
@@ -145,7 +143,7 @@ public class Simulator implements Displayable {
     }
 
     public boolean complete() {
-        return agents.stream().allMatch(SwarmAgent::getFinished);
+        return agents.stream().allMatch(SwarmAgent::isFinished);
     }
 
     @Override

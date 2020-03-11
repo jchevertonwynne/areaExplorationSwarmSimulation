@@ -17,7 +17,7 @@ public class AStarPathing {
         private double distanceEstimate;
         private int actualDistance;
         private @NonNull Coord tile;
-        private @NonNull List<Coord> history;
+        private @NonNull LinkedList<Coord> history;
     }
 
     private static Comparator<AStarPathOption> aStarOptionComparator = comparingDouble(aStarPathOption -> aStarPathOption.getActualDistance() + aStarPathOption.getDistanceEstimate());
@@ -27,7 +27,7 @@ public class AStarPathing {
      * @param destination Goal coordinate
      * @return Path to destination, or null
      */
-    public static List<Coord> calculatePath(Coord start, Coord destination, Map<Coord, Boolean> world) {
+    public static LinkedList<Coord> calculatePath(Coord start, Coord destination, Map<Coord, Boolean> world) {
         Set<Coord> seen = new HashSet<>();
         seen.add(start);
 
@@ -36,7 +36,7 @@ public class AStarPathing {
                 start.distance(destination),
                 0,
                 start,
-                new ArrayList<>()));
+                new LinkedList<>()));
 
         while (!toTry.isEmpty()) {
             AStarPathOption nextOption = toTry.poll();
@@ -78,7 +78,7 @@ public class AStarPathing {
                 .map(currTile::combine)
                 .filter(coord -> world.getOrDefault(coord, false))
                 .map(coord -> {
-                    List<Coord> newHistory = new ArrayList<>(history);
+                    LinkedList<Coord> newHistory = new LinkedList<>(history);
                     newHistory.add(coord);
                     return new AStarPathOption(
                             coord.distance(goal),
