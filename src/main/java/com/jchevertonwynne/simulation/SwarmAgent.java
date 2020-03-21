@@ -342,6 +342,10 @@ public class SwarmAgent implements Displayable {
         return position.distance(agent.getPosition());
     }
 
+    public double distanceFrom(Coord coord) {
+        return position.distance(coord);
+    }
+
     public double distanceToGoal() {
         return position.distance(currentGoal);
     }

@@ -12,17 +12,20 @@ import static com.jchevertonwynne.utils.CircleOperations.generateCircleRays;
 import static com.jchevertonwynne.utils.Common.BROADCAST_RADIUS;
 import static com.jchevertonwynne.utils.Common.GLOBAL_KNOWLEDGE;
 import static com.jchevertonwynne.utils.Common.SIGHT_RADIUS;
+import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 
 public class Scanner {
     private final Boolean[][] world;
     private final SwarmAgent agent;
     private final Set<SwarmAgent> otherAgents;
+    private final List<Coord> drops;
 
-    public Scanner(Boolean[][] world, SwarmAgent agent, Set<SwarmAgent> otherAgents) {
+    public Scanner(Boolean[][] world, SwarmAgent agent, Set<SwarmAgent> otherAgents, List<Coord> drops) {
         this.world = world;
         this.agent = agent;
         this.otherAgents = otherAgents;
+        this.drops = drops;
     }
 
     public Set<SwarmAgent> getOtherLocalAgents() {
@@ -35,6 +38,12 @@ public class Scanner {
                     .filter(otherAgent -> otherAgent.distanceFrom(agent) < BROADCAST_RADIUS)
                     .collect(toSet());
         }
+    }
+
+    public List<Coord> getLocalDrops() {
+        return drops.stream()
+                .filter(drop -> agent.distanceFrom(drop) < SIGHT_RADIUS)
+                .collect(toList());
     }
 
     /**
