@@ -4,6 +4,7 @@ import com.jchevertonwynne.display.Displayable;
 import com.jchevertonwynne.pathing.PathMediator;
 import com.jchevertonwynne.structures.BoundarySearchResult;
 import com.jchevertonwynne.structures.Coord;
+import com.jchevertonwynne.structures.Drop;
 import com.jchevertonwynne.structures.Move;
 import com.jchevertonwynne.structures.TileStatus;
 import org.slf4j.Logger;
@@ -20,16 +21,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 import static com.jchevertonwynne.pathing.AStarPathing.calculatePath;
 import static com.jchevertonwynne.pathing.BoundarySearch.calculateBoundaryTiles;
 import static com.jchevertonwynne.structures.Coord.CARDINAL_DIRECTIONS;
 import static com.jchevertonwynne.utils.CircleOperations.generateCircleRays;
+import static com.jchevertonwynne.utils.Common.EMPLOY_DROPS;
+import static com.jchevertonwynne.utils.Common.GLOBAL_KNOWLEDGE;
 import static com.jchevertonwynne.utils.Common.SIGHT_RADIUS;
 import static java.lang.Math.exp;
 import static java.lang.Math.log;
-import static java.util.Collections.emptyList;
 import static java.util.Collections.singleton;
 import static java.util.Comparator.comparingDouble;
 import static java.util.Objects.hash;
@@ -40,8 +43,9 @@ import static java.util.stream.Collectors.toSet;
 public class SwarmAgent implements Displayable {
     private enum AgentState {
         EXPLORING,
+        FOLLOWING,
         RETURNING,
-        FINISHED
+        FINISHED,
     }
 
     private final Logger logger = LoggerFactory.getLogger(SwarmAgent.class);
@@ -148,6 +152,21 @@ public class SwarmAgent implements Displayable {
             for (SwarmAgent swarmAgent : headingSameWay) {
                 repathed |= mediator.mediate(this, swarmAgent);
             }
+
+            if (!GLOBAL_KNOWLEDGE && EMPLOY_DROPS) {
+                List<Drop> localDrops = scanner.getLocalDrops();
+                Optional<Coord> dropAtGoal = localDrops.stream()
+                        .filter(drop -> !drop.getAgent().equals(this))
+                        .map(Drop::getCoord)
+                        .filter(drop -> drop.distance(currentGoal) < SIGHT_RADIUS)
+                        .findFirst();
+                if (dropAtGoal.isPresent()) {
+                    Coord drop = dropAtGoal.get();
+                    boolean blackListed = blacklistCoord(drop);
+                    if (blackListed) logger.info("Agent {} found drop {} and will re-path", this, drop);
+                    repathed |= blackListed;
+                }
+            }
         }
 
         return repathed;
@@ -167,10 +186,9 @@ public class SwarmAgent implements Displayable {
             return;
         }
 
-        if (currentPath.size() > 0) return;
+        if (agentState.equals(AgentState.FOLLOWING) && currentPath.size() > 0) return;
 
         if (mediated) {
-            // other agent took its path
             mediated = false;
         }
         else if (Objects.equals(currentGoal, position)) {
@@ -188,17 +206,25 @@ public class SwarmAgent implements Displayable {
 
         if (legalMoves.size() != 0) {
             Coord tile = rankNextMoves(legalMoves);
-            logger.info("Agent {} now moving to {} from {}", this, tile, position);
+            if (!GLOBAL_KNOWLEDGE && EMPLOY_DROPS) scanner.putDrop();
             currentPath = calculatePath(position, tile, world);
+            agentState = AgentState.FOLLOWING;
+            logger.info("Agent {} now moving to {} from {}", this, tile, position);
         }
         else {
             List<Move> blacklistedMoves = boundarySearchResult.getBlacklistedMoves();
             if (blacklistedMoves.size() != 0) {
                 Coord tile = rankNextMoves(blacklistedMoves);
-                blackList.remove(tile);
+                List<Coord> toWhiteList = blackList.stream()
+                        .filter(b -> b.distance(tile) < SIGHT_RADIUS)
+                        .collect(toList());
+                blackList.removeAll(toWhiteList);
+                whiteList.addAll(toWhiteList);
                 whiteList.add(tile);
-                logger.info("Agent {} white listing and going to {} from {}", this, tile, position);
+                if (!GLOBAL_KNOWLEDGE && EMPLOY_DROPS) scanner.putDrop();
                 currentPath = calculatePath(position, tile, world);
+                agentState = AgentState.FOLLOWING;
+                logger.info("Agent {} white listing and going to {} from {}", this, tile, position);
             }
             else {
                 logger.info("Agent {} going back to start {} from {}", this,  startPosition, position);
@@ -273,6 +299,16 @@ public class SwarmAgent implements Displayable {
             try {
                 position = currentPath.removeFirst();
                 distanceMoved++;
+                if (currentPath.isEmpty()) {
+                    switch (agentState) {
+                        case RETURNING:
+                            agentState = AgentState.FINISHED;
+                            break;
+                        case FOLLOWING:
+                            agentState = AgentState.EXPLORING;
+                            break;
+                    }
+                }
             }
             catch (NoSuchElementException e) {
                 System.out.println("stop this");
@@ -286,14 +322,6 @@ public class SwarmAgent implements Displayable {
                 .map(coord::combine)
                 .filter(world::containsKey)
                 .filter(world::get)
-                .collect(toList());
-    }
-
-    private List<Coord> undiscoveredNeighbours(Coord coord) {
-        if (coord == null) return emptyList();
-        return CARDINAL_DIRECTIONS.stream()
-                .map(coord::combine)
-                .filter(neighbour -> !world.containsKey(neighbour))
                 .collect(toList());
     }
 
@@ -326,17 +354,17 @@ public class SwarmAgent implements Displayable {
     public boolean blacklistCoord(Coord coord) {
         if (whiteList.stream().allMatch(w -> w.distance(coord) > SIGHT_RADIUS)) {
             blackList.add(coord);
-            currentPath.clear();
             mediated = true;
+            agentState = AgentState.EXPLORING;
+
+            currentGoal = startPosition;
+            currentPath.clear();
             return true;
         }
         return false;
     }
 
-    public void clearCurrentPath() {
-        currentPath.clear();
-        currentGoal = startPosition;
-    }
+
 
     public double distanceFrom(SwarmAgent agent) {
         return position.distance(agent.getPosition());

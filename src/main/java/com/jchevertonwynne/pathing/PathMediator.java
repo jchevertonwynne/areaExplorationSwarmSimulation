@@ -25,14 +25,12 @@ public class PathMediator {
 
         if (aDistanceToGoal < bDistanceToGoal) {
             Coord toBan = a.getCurrentGoal();
-            b.clearCurrentPath();
             boolean blacklisted = b.blacklistCoord(toBan);
             if (blacklisted) logger.info("Agent {} continuing, agent {} to make new choice of move", a, b);
             return blacklisted;
         }
         else {
             Coord toBan = b.getCurrentGoal();
-            a.clearCurrentPath();
             boolean blacklisted = a.blacklistCoord(toBan);
             if (blacklisted) logger.info("Agent {} continuing, agent {} to make new choice of move", b, a);
             return  blacklisted;

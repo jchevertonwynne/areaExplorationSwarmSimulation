@@ -89,10 +89,16 @@ public class BoundarySearch {
             Coord possibleTile = nextPair.getCurrentTile();
             if (world.containsKey(possibleTile)) {
                 nextToCheck.add(new MoveHistory(previousTile, possibleTile));
-            } else if (!resultTiles.contains(previousTile)) {
+            }
+            else if (!resultTiles.contains(previousTile)) {
+                Move move = new Move(previousTile, distance);
                 boolean closeToBlacklist = blacklist.stream().anyMatch(tile -> tile.distance(previousTile) < SIGHT_RADIUS);
-                List<Move> listToAddTo = closeToBlacklist ? blacklistedResults : legalResults;
-                listToAddTo.add(new Move(previousTile, distance));
+                if (closeToBlacklist) {
+                    blacklistedResults.add(move);
+                }
+                else {
+                    legalResults.add(move);
+                }
                 resultTiles.add(previousTile);
                 turnsWithoutFind = 0;
             }

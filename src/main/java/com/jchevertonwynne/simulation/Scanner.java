@@ -1,6 +1,7 @@
 package com.jchevertonwynne.simulation;
 
 import com.jchevertonwynne.structures.Coord;
+import com.jchevertonwynne.structures.Drop;
 import com.jchevertonwynne.structures.TileStatus;
 
 import java.util.HashSet;
@@ -19,9 +20,9 @@ public class Scanner {
     private final Boolean[][] world;
     private final SwarmAgent agent;
     private final Set<SwarmAgent> otherAgents;
-    private final List<Coord> drops;
+    private final List<Drop> drops;
 
-    public Scanner(Boolean[][] world, SwarmAgent agent, Set<SwarmAgent> otherAgents, List<Coord> drops) {
+    public Scanner(Boolean[][] world, SwarmAgent agent, Set<SwarmAgent> otherAgents, List<Drop> drops) {
         this.world = world;
         this.agent = agent;
         this.otherAgents = otherAgents;
@@ -40,9 +41,14 @@ public class Scanner {
         }
     }
 
-    public List<Coord> getLocalDrops() {
+    public void putDrop() {
+        Drop drop = new Drop(agent.getPosition(), agent);
+        drops.add(drop);
+    }
+
+    public List<Drop> getLocalDrops() {
         return drops.stream()
-                .filter(drop -> agent.distanceFrom(drop) < SIGHT_RADIUS)
+                .filter(drop -> agent.distanceFrom(drop.getCoord()) < SIGHT_RADIUS)
                 .collect(toList());
     }
 
