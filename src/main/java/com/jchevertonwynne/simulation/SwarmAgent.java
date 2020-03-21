@@ -187,14 +187,14 @@ public class SwarmAgent implements Displayable {
         List<Move> legalMoves = boundarySearchResult.getLegalMoves();
 
         if (legalMoves.size() != 0) {
-            Coord tile = chooseNextMove(legalMoves);
+            Coord tile = rankNextMoves(legalMoves);
             logger.info("Agent {} now moving to {} from {}", this, tile, position);
             currentPath = calculatePath(position, tile, world);
         }
         else {
             List<Move> blacklistedMoves = boundarySearchResult.getBlacklistedMoves();
             if (blacklistedMoves.size() != 0) {
-                Coord tile = chooseNextMove(blacklistedMoves);
+                Coord tile = rankNextMoves(blacklistedMoves);
                 blackList.remove(tile);
                 whiteList.add(tile);
                 logger.info("Agent {} white listing and going to {} from {}", this, tile, position);
@@ -209,7 +209,7 @@ public class SwarmAgent implements Displayable {
         currentGoal = currentPath.getLast();
     }
 
-    private Coord chooseNextMove(List<Move> choices) {
+    private Coord rankNextMoves(List<Move> choices) {
         Comparator<Move> moveComparator = comparingDouble(this::evaluateGoodness);
         if (choices.size() == 0) throw new IllegalArgumentException("A zero size list is not allowed");
         return choices.stream()
