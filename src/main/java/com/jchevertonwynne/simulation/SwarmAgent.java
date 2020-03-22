@@ -159,6 +159,7 @@ public class SwarmAgent implements Displayable {
                         .filter(drop -> !drop.getAgent().equals(this))
                         .map(Drop::getCoord)
                         .filter(drop -> drop.distance(currentGoal) < SIGHT_RADIUS)
+//                        .filter(drop -> whiteList.stream().noneMatch(white -> white.distance(drop) < SIGHT_RADIUS))
                         .findFirst();
                 if (dropAtGoal.isPresent()) {
                     Coord drop = dropAtGoal.get();
@@ -299,15 +300,8 @@ public class SwarmAgent implements Displayable {
             try {
                 position = currentPath.removeFirst();
                 distanceMoved++;
-                if (currentPath.isEmpty()) {
-                    switch (agentState) {
-                        case RETURNING:
-                            agentState = AgentState.FINISHED;
-                            break;
-                        case FOLLOWING:
-                            agentState = AgentState.EXPLORING;
-                            break;
-                    }
+                if (currentPath.isEmpty() && agentState.equals(AgentState.FOLLOWING)) {
+                    agentState = AgentState.EXPLORING;
                 }
             }
             catch (NoSuchElementException e) {

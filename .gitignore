@@ -5,3 +5,4 @@ target/
 simulation.log
 imageOutput/*.png
 *.swp
+*.swo
