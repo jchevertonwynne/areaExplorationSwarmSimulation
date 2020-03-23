@@ -24,7 +24,7 @@ public class Common {
 
     public static final boolean GLOBAL_KNOWLEDGE = true;
     public static final boolean EMPLOY_DROPS = false;
-    public static final int AGENT_COUNT = 2;
+    public static final int AGENT_COUNT = 3;
     public static final int SIGHT_RADIUS = 30;
     public static final int BROADCAST_RADIUS = 60;
 }
