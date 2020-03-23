@@ -25,6 +25,13 @@ public class Coord {
         );
     }
 
+    public Coord difference(Coord other) {
+        return new Coord(
+                other.getX() - x,
+                other.getY() - y
+        );
+    }
+
     public List<Coord> rotations() {
         return List.of(
                 this,

@@ -2,9 +2,9 @@ package com.jchevertonwynne.utils;
 
 import com.jchevertonwynne.structures.Coord;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Hashtable;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
@@ -18,6 +18,7 @@ import static java.util.stream.Collectors.toSet;
 
 public class CircleOperations {
     private static Hashtable<Integer, Set<Coord>> circleEdges = new Hashtable<>();
+    private static Hashtable<Coord, List<Coord>> centerRays = new Hashtable<>();
     private static Hashtable<Integer, List<List<Coord>>> circleRays = new Hashtable<>();
 
     private static Set<Coord> calculateArc(int size) {
@@ -40,13 +41,12 @@ public class CircleOperations {
     }
 
     private static Set<Coord> baseCircle(int size) {
-        circleEdges.computeIfAbsent(
+        return circleEdges.computeIfAbsent(
                 size,
                 radius -> calculateArc(size).stream()
                         .flatMap(edgeTile -> edgeTile.rotations().stream())
                         .collect(toSet())
         );
-        return circleEdges.get(size);
     }
 
     public static Set<Coord> calcCircle(Coord centre, int size) {
@@ -61,33 +61,42 @@ public class CircleOperations {
         return atan2(dy, dx);
     }
 
-    public static List<Coord> calculateRay(Coord end) {
-        Coord start = new Coord(0, 0);
-        List<Coord> result = new ArrayList<>();
-        double targetAngle = angleBetween(start, end);
-        int dx = compare(end.getX() - start.getX(), 0);
-        int dy = compare(end.getY() - start.getY(), 0);
+    public static List<Coord> calculateRay(Coord start, Coord end) {
+        Coord diff = start.difference(end);
+        return calculateRay(diff).stream()
+                .map(start::combine)
+                .collect(toList());
+    }
 
-        Coord current = start;
-        while (!current.equals(end)) {
-            int cx = current.getX();
-            int cy = current.getY();
-            Coord a = dx != 0 ? new Coord(cx + dx, cy) : null;
-            Coord b = dy != 0 ? new Coord(cx, cy + dy) : null;
-            current = mostSimilarAngle(a, b, end, targetAngle);
-            result.add(current);
-        }
-        return result;
+    public static List<Coord> calculateRay(Coord end) {
+        return centerRays.computeIfAbsent(end, coord -> {
+            Coord start = new Coord(0, 0);
+            List<Coord> result = new LinkedList<>();
+            double targetAngle = angleBetween(start, end);
+            int dx = compare(end.getX() - start.getX(), 0);
+            int dy = compare(end.getY() - start.getY(), 0);
+
+            Coord current = start;
+            while (!current.equals(end)) {
+                int cx = current.getX();
+                int cy = current.getY();
+                Coord a = dx != 0 ? new Coord(cx + dx, cy) : null;
+                Coord b = dy != 0 ? new Coord(cx, cy + dy) : null;
+                current = mostSimilarAngle(a, b, end, targetAngle);
+                result.add(current);
+            }
+            return result;
+        });
     }
 
     public static List<List<Coord>> generateCircleRays(Coord centre, int size) {
-        circleRays.computeIfAbsent(
+        List<List<Coord>> circleRays = CircleOperations.circleRays.computeIfAbsent(
                 size,
                 radius -> baseCircle(radius).stream()
                         .map(CircleOperations::calculateRay)
                         .collect(toList())
         );
-        return circleRays.get(size).stream()
+        return circleRays.stream()
                 .map(rayLine -> rayLine.stream()
                         .map(centre::combine)
                         .collect(toList()))

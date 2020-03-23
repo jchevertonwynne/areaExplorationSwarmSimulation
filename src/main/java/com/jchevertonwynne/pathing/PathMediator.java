@@ -23,17 +23,21 @@ public class PathMediator {
         double aDistanceToGoal = a.distanceToGoal();
         double bDistanceToGoal = b.distanceToGoal();
 
+        SwarmAgent x;
+        SwarmAgent y;
+
         if (aDistanceToGoal < bDistanceToGoal) {
-            Coord toBan = a.getCurrentGoal();
-            boolean blacklisted = b.blacklistCoord(toBan);
-            if (blacklisted) logger.info("Agent {} continuing, agent {} to make new choice of move", a, b);
-            return blacklisted;
+            x = a;
+            y = b;
         }
         else {
-            Coord toBan = b.getCurrentGoal();
-            boolean blacklisted = a.blacklistCoord(toBan);
-            if (blacklisted) logger.info("Agent {} continuing, agent {} to make new choice of move", b, a);
-            return  blacklisted;
+            x = b;
+            y = a;
         }
+
+        Coord toBan = x.getCurrentGoal();
+        boolean blacklisted = y.blacklistCoord(toBan);
+        if (blacklisted) logger.info("Agent {} continuing to {}, agent {} to make new choice of move", x, toBan, y);
+        return blacklisted;
     }
 }

@@ -48,7 +48,7 @@ public class Simulator implements Displayable {
 
     private ScannerFactory scannerFactory;
     private Set<SwarmAgent> agents = new HashSet<>();
-    private Map<Color, Integer> scans = new HashMap<>();
+    private Map<SwarmAgent, Integer> scans = new HashMap<>();
 
     public Simulator(int agentCount, Boolean[][] world) {
         scannerFactory = new ScannerFactory(world, agents);
@@ -62,7 +62,7 @@ public class Simulator implements Displayable {
 
         agents.forEach(agent -> {
             agent.initialiseScanner(scannerFactory);
-            scans.put(agent.getColor(), 0);
+            scans.put(agent, 0);
         });
     }
 
@@ -86,12 +86,17 @@ public class Simulator implements Displayable {
         return result;
     }
 
-    private Set<Coord> getSemiCommon(Map<Coord, Boolean> combined) {
+    private Set<Coord> getSemiCommon() {
+        Map<Coord, Integer> seenCount = new HashMap<>();
         Set<Coord> result = new HashSet<>();
         List<Map<Coord, Boolean>> allWorlds = agents.stream().map(SwarmAgent::getWorld).collect(toList());
-        for (Map<Coord, Boolean> world : allWorlds) {
-            result.addAll(world.keySet());
-        }
+        allWorlds.forEach(world -> world.forEach((k, v) -> {
+            seenCount.putIfAbsent(k, 0);
+            seenCount.compute(k, (coord, count) -> count + 1);
+        }));
+        seenCount.forEach((coord, count) -> {
+            if (count > 1) result.add(coord);
+        });
         return result;
     }
 
@@ -120,6 +125,7 @@ public class Simulator implements Displayable {
             for (SwarmAgent agent : agents) {
                 repathed |= agent.shareWithNeighbours(pathMediator);
             }
+            long start = System.currentTimeMillis();
             ExecutorService threadManager = Executors.newCachedThreadPool();
             agents.forEach(a -> threadManager.execute(new AgentHandlerThread(a)));
             threadManager.shutdown();
@@ -132,14 +138,14 @@ public class Simulator implements Displayable {
 
         boolean newlyScanned = false;
         for (SwarmAgent agent : agents) {
-            if (scans.get(agent.getColor()) != agent.getScansDone()) {
-                scans.put(agent.getColor(), agent.getScansDone());
+            if (scans.get(agent) != agent.getScansDone()) {
+                scans.put(agent, agent.getScansDone());
                 newlyScanned = true;
             }
         }
 
         agents.forEach(SwarmAgent::applyNextMove);
-        return newlyScanned;
+        return newlyScanned || complete();
     }
 
     public boolean complete() {
@@ -161,7 +167,7 @@ public class Simulator implements Displayable {
         }
 
         Map<Coord, Boolean> coordPathableMap = combinedDiscovery();
-        Set<Coord> knownByMultiple = getSemiCommon(coordPathableMap);
+        Set<Coord> knownByMultiple = getSemiCommon();
         Set<Coord> knownByAll = getCommon(coordPathableMap);
         coordPathableMap.forEach((coord, pathable) -> {
             int knownAreaColour;

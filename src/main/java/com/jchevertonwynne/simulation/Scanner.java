@@ -3,6 +3,7 @@ package com.jchevertonwynne.simulation;
 import com.jchevertonwynne.structures.Coord;
 import com.jchevertonwynne.structures.Drop;
 import com.jchevertonwynne.structures.TileStatus;
+import com.jchevertonwynne.utils.CircleOperations;
 
 import java.util.HashSet;
 import java.util.List;
@@ -34,9 +35,9 @@ public class Scanner {
             return new HashSet<>(otherAgents);
         }
         else {
-            Map<Coord, Boolean> knownWorld = agent.getWorld();
             return otherAgents.stream()
                     .filter(otherAgent -> otherAgent.distanceFrom(agent) < BROADCAST_RADIUS)
+                    .filter(this::inSight)
                     .collect(toSet());
         }
     }
@@ -48,8 +49,24 @@ public class Scanner {
 
     public List<Drop> getLocalDrops() {
         return drops.stream()
-                .filter(drop -> agent.distanceFrom(drop.getCoord()) < SIGHT_RADIUS)
+                .filter(drop -> agent.distanceFrom(drop.getCoord()) <= SIGHT_RADIUS)
+                .filter(drop -> !drop.getAgent().equals(agent))
+                .filter(this::inSight)
                 .collect(toList());
+    }
+
+    private boolean inSight(Drop drop) {
+        return inSight(drop.getCoord());
+    }
+
+    private boolean inSight(SwarmAgent agent) {
+        return inSight(agent.getPosition());
+    }
+
+    private boolean inSight(Coord coord) {
+        Map<Coord, Boolean> world = agent.getWorld();
+        List<Coord> pathToCoord = CircleOperations.calculateRay(agent.getPosition(), coord);
+        return pathToCoord.stream().allMatch(c -> world.getOrDefault(c, false));
     }
 
     /**

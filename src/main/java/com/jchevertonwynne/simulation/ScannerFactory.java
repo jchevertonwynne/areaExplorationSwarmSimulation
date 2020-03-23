@@ -2,7 +2,7 @@ package com.jchevertonwynne.simulation;
 
 import com.jchevertonwynne.structures.Drop;
 
-import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
@@ -11,7 +11,7 @@ import static java.util.stream.Collectors.toSet;
 public class ScannerFactory {
     private final Boolean[][] world;
     private final Set<SwarmAgent> agents;
-    private final List<Drop> drops = new ArrayList<>();
+    private final List<Drop> drops = new LinkedList<>();
 
     public ScannerFactory(Boolean[][] world, Set<SwarmAgent> agents) {
         this.world = world;

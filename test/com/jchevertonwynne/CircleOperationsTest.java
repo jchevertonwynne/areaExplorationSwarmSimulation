@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Set;
 
 import static java.lang.Math.PI;
+import static java.util.stream.Collectors.toList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class CircleOperationsTest {
@@ -50,15 +51,16 @@ class CircleOperationsTest {
 
     @Test
     public void shouldCalculateAnglesCorrectly() {
+        Coord start = new Coord(0, 0);
         List<AngleResult> expectedResults = Arrays.asList(
-                new AngleResult(new Coord(0, 0), new Coord(1, 1), PI / 4),
-                new AngleResult(new Coord(0, 0), new Coord(0, 1), PI / 2),
-                new AngleResult(new Coord(0, 0), new Coord(-1, 1), PI / 4 * 3),
-                new AngleResult(new Coord(0, 0), new Coord(-1, 0), PI),
-                new AngleResult(new Coord(0, 0), new Coord(-1, -1), -(PI / 4 * 3)),
-                new AngleResult(new Coord(0, 0), new Coord(0, -1), -(PI / 2)),
-                new AngleResult(new Coord(0, 0), new Coord(1, -1), -(PI / 4)),
-                new AngleResult(new Coord(0, 0), new Coord(1, 0), 0)
+                new AngleResult(start, new Coord(1, 1), PI / 4),
+                new AngleResult(start, new Coord(0, 1), PI / 2),
+                new AngleResult(start, new Coord(-1, 1), PI * 3 / 4),
+                new AngleResult(start, new Coord(-1, 0), PI),
+                new AngleResult(start, new Coord(-1, -1), -(PI * 3 / 4)),
+                new AngleResult(start, new Coord(0, -1), -(PI / 2)),
+                new AngleResult(start, new Coord(1, -1), -(PI / 4)),
+                new AngleResult(start, new Coord(1, 0), 0)
         );
 
         expectedResults.forEach(expected -> {
@@ -104,6 +106,21 @@ class CircleOperationsTest {
 
         Coord result4 = CircleOperations.mostSimilarAngle(f, g, end3, targetAngle3);
         assertEquals(result4, f);
+    }
+
+    @Test
+    public void shouldMakeRayFromPointToPoint() {
+        Coord start = new Coord(3, 5);
+        Coord end = new Coord(10, 10);
+
+        List<Coord> expected = CircleOperations.calculateRay(new Coord(7, 5)).stream()
+                .map(start::combine)
+                .collect(toList());
+        List<Coord> result = CircleOperations.calculateRay(start, end);
+
+        System.out.println(result);
+
+        assertEquals(expected, result);
     }
 
     private static class AngleResult {

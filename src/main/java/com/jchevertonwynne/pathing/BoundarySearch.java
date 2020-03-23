@@ -8,6 +8,7 @@ import lombok.Value;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -33,8 +34,8 @@ public class BoundarySearch {
     private Set<Coord> seen = new HashSet<>();
     private int distance = 0;
     private int turnsWithoutFind = 0;
-    private List<Move> legalResults = new ArrayList<>();
-    private List<Move> blacklistedResults = new ArrayList<>();
+    private List<Move> legalResults = new LinkedList<>();
+    private List<Move> blacklistedResults = new LinkedList<>();
 
 
     private BoundarySearch(Coord position, Map<Coord, Boolean> world, Set<Coord> blacklist) {
@@ -53,7 +54,7 @@ public class BoundarySearch {
      */
     private BoundarySearchResult findAvailable() {
         BoundarySearchResult result = new BoundarySearchResult(legalResults, blacklistedResults);
-        List<MoveHistory> toCheck = new ArrayList<>();
+        List<MoveHistory> toCheck = new LinkedList<>();
         toCheck.add(new MoveHistory(position, position));
         seen.add(position);
 
@@ -92,7 +93,7 @@ public class BoundarySearch {
             }
             else if (!resultTiles.contains(previousTile)) {
                 Move move = new Move(previousTile, distance);
-                boolean closeToBlacklist = blacklist.stream().anyMatch(tile -> tile.distance(previousTile) < SIGHT_RADIUS);
+                boolean closeToBlacklist = blacklist.stream().anyMatch(tile -> tile.distance(previousTile) <= SIGHT_RADIUS);
                 if (closeToBlacklist) {
                     blacklistedResults.add(move);
                 }

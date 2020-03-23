@@ -55,10 +55,9 @@ public class Main {
 		logger.info("Commencing exploration of {}", BACKGROUND_NAME);
 		do {
 			long start = System.currentTimeMillis();
-			boolean change;
-			do {
-				change = simulator.progress();
-			} while (!change);
+			while (true) {
+				if (simulator.progress()) break;
+			}
 			System.out.printf("next scan calculated in %d ms\n", System.currentTimeMillis() - start);
 			if (DISPLAY) {
 				graphics.drawImage(originalImage, 0, 0, null);
