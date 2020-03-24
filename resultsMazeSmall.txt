@@ -1,124 +1,124 @@
 1 agent:
-11730 and scans 334
+11730 334
 
 global
 2 agent:
-6932 and scans 159
-6932 and scans 176
+6932 159
+6932 176
 
 3 agent:
-4684 and scans 107
-4712 and scans 134
-4712 and scans 97
+4684 107
+4712 134
+4712 97
 
 
-4364 and scans 84
-4364 and scans 87
-4404 and scans 125
-4462 and scans 51
+4364 84
+4364 87
+4404 125
+4462 51
 
 5 agent:
-3840 and scans 79
-3848 and scans 52
-3898 and scans 93
-3940 and scans 55
-3980 and scans 83
+3840 79
+3848 52
+3898 93
+3940 55
+3980 83
 
 6 agent:
-3128 and scans 75
-3172 and scans 40
-3178 and scans 51
-3590 and scans 37
-3800 and scans 80
-3802 and scans 89
+3128 75
+3172 40
+3178 51
+3590 37
+3800 80
+3802 89
 
 7 agent:
-3218 and scans 35
-3242 and scans 61
-3260 and scans 54
-3260 and scans 37
-3594 and scans 77
-3624 and scans 57
-3638 and scans 66
+3218 35
+3242 61
+3260 54
+3260 37
+3594 77
+3624 57
+3638 66
 
 
 local
 2 agent:
-10540 and scans 314
-10564 and scans 324
+10540 314
+10564 324
 
 3 agent:
-7442 and scans 209
-7462 and scans 166
-10730 and scans 304
+7442 209
+7462 166
+10730 304
 
 4 agent:
-7120 and scans 121
-9394 and scans 265
-9886 and scans 236
-9912 and scans 231
+7120 121
+9394 265
+9886 236
+9912 231
 
 5 agent:
-4328 and scans 103
-4358 and scans 105
-4372 and scans 104
-4382 and scans 116
-4386 and scans 108
+4328 103
+4358 105
+4372 104
+4382 116
+4386 108
 
 6 agent:
-4470 and scans 76
-4476 and scans 124
-4492 and scans 98
-6062 and scans 153
-6078 and scans 106
-7626 and scans 159
+4470 76
+4476 124
+4492 98
+6062 153
+6078 106
+7626 159
 
 7 agent:
-4054 and scans 88
-4070 and scans 91
-4170 and scans 80
-4184 and scans 79
-6774 and scans 98
-6810 and scans 137
-7938 and scans 147
+4054 88
+4070 91
+4170 80
+4184 79
+6774 98
+6810 137
+7938 147
 
 
 local drops
 2 agent:
-8740 and scans 174
-8742 and scans 164
+8740 174
+8742 164
 
 3 agent:
-7604 and scans 143
-7768 and scans 190
-15794 and scans 317
+7604 143
+7768 190
+15794 317
 
 4 agent:
-4908 and scans 114
-4912 and scans 72
-4930 and scans 96
-4968 and scans 151
+4908 114
+4912 72
+4930 96
+4968 151
 
 5 agent:
-4928 and scans 72
-4930 and scans 80
-4946 and scans 74
-9446 and scans 188
-11202 and scans 204
+4928 72
+4930 80
+4946 74
+9446 188
+11202 204
 
 6 agent:
-4028 and scans 89
-4064 and scans 64
-4070 and scans 57
-4070 and scans 86
-4104 and scans 45
-4108 and scans 106
+4028 89
+4064 64
+4070 57
+4070 86
+4104 45
+4108 106
 
 7 agent:
-4654 and scans 62
-5450 and scans 107
-5464 and scans 92
-5476 and scans 117
-5834 and scans 71
-6554 and scans 75
-15994 and scans 224
+4654 62
+5450 107
+5464 92
+5476 117
+5834 71
+6554 75
+15994 224

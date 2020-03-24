@@ -1,98 +1,124 @@
 1 agent:
-11390 and scans 335
+11390 335
 
 global
 2 agent:
-6128 and scans 181
-6398 and scans 157
+6128 181
+6398 157
 
 3 agent:
-4696 and scans 99
-4710 and scans 128
-4724 and scans 117
+4696 99
+4710 128
+4724 117
 
 4 agent:
-4298 and scans 77
-4308 and scans 108
-4318 and scans 63
-4318 and scans 104
+4298 77
+4308 108
+4318 63
+4318 104
 
 5 agent:
-3592 and scans 49
-3636 and scans 92
-3756 and scans 59
-3810 and scans 79
-3840 and scans 86
+3592 49
+3636 92
+3756 59
+3810 79
+3840 86
 
 6 agent:
-3440 and scans 38
-3478 and scans 36
-3700 and scans 51
-3778 and scans 63
-3860 and scans 89
-3876 and scans 95
+3440 38
+3478 36
+3700 51
+3778 63
+3860 89
+3876 95
 
+7 agent:
+3354 37
+3356 62
+3360 67
+3508 55
+3608 33
+3618 62
+3668 75
 
 local
 2 agent:
-10336 and scans 319
-10338 and scans 319
+10336 319
+10338 319
 
 3 agent:
-6134 and scans 145
-6162 and scans 124
-6214 and scans 152
+6134 145
+6162 124
+6214 152
 
 4 agent:
-6340 and scans 148
-8868 and scans 179
-9084 and scans 216
-10224 and scans 245
+6340 148
+8868 179
+9084 216
+10224 245
 
 5 agent:
-5736 and scans 155
-6770 and scans 161
-6792 and scans 178
-6804 and scans 148
-10550 and scans 289
+5736 155
+6770 161
+6792 178
+6804 148
+10550 289
 
 6 agent:
-4644 and scans 101
-5870 and scans 102
-7058 and scans 142
-7678 and scans 126
-8106 and scans 139
-9306 and scans 222
+4644 101
+5870 102
+7058 142
+7678 126
+8106 139
+9306 222
+
+7 agent:
+4944 99
+4958 75
+4966 92
+4968 119
+5084 117
+5098 134
+5142 130
 
 
 local drops
 2 agent:
-11826 and scans 274
-11840 and scans 291
+11826 274
+11840 291
 
 3 agent:
-7376 and scans 135
-7630 and scans 146
-7748 and scans 130
+7376 135
+7630 146
+7748 130
 
 
 4 agent:
-6434 and scans 109
-7850 and scans 144
-7876 and scans 134
-14720 and scans 255
+6434 109
+7850 144
+7876 134
+14720 255
 
 5 agent:
-4542 and scans 67
-4742 and scans 95
-8644 and scans 136
-8644 and scans 88
-12854 and scans 2009
+4542 67
+4742 95
+8644 136
+8644 88
+12854 200
 
 6 agent:
-6930 and scans 158
-6932 and scans 195
-6960 and scans 196
-7070 and scans 156
-8234 and scans 204
-8344 and scans 213
+6930 158
+6932 195
+6960 196
+7070 156
+8234 204
+8344 213
+
+7 agent:
+6538 82
+6554 121
+6688 76
+6826 70
+6854 68
+10762 165
+13828 155
