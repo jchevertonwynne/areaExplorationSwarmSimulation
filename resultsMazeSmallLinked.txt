@@ -1,52 +1,98 @@
 1 agent:
-2020-03-20 18:37:41 INFO  SwarmAgent:163 - Agent [r=50,g=55,b=150] returned to start Coord(x=20, y=20) with distance moved 14114 and scans 321
+11390 and scans 335
 
-global:
+global
 2 agent:
-2020-03-20 18:51:28 INFO  SwarmAgent:163 - Agent [r=26,g=181,b=67] returned to start Coord(x=20, y=20) with distance moved 8044 and scans 179
-2020-03-20 18:51:28 INFO  SwarmAgent:163 - Agent [r=53,g=54,b=32] returned to start Coord(x=20, y=20) with distance moved 8144 and scans 159
+6128 and scans 181
+6398 and scans 157
 
 3 agent:
-2020-03-20 19:48:12 INFO  SwarmAgent:163 - Agent [r=61,g=230,b=131] returned to start Coord(x=20, y=20) with distance moved 6212 and scans 109
-2020-03-20 19:48:13 INFO  SwarmAgent:163 - Agent [r=113,g=69,b=234] returned to start Coord(x=20, y=20) with distance moved 6334 and scans 140
-2020-03-20 19:48:16 INFO  SwarmAgent:163 - Agent [r=253,g=98,b=168] returned to start Coord(x=20, y=20) with distance moved 6650 and scans 94
+4696 and scans 99
+4710 and scans 128
+4724 and scans 117
 
 4 agent:
-2020-03-20 20:10:47 INFO  SwarmAgent:163 - Agent [r=9,g=21,b=137] returned to start Coord(x=20, y=20) with distance moved 4778 and scans 76
-2020-03-20 20:10:48 INFO  SwarmAgent:163 - Agent [r=118,g=77,b=110] returned to start Coord(x=20, y=20) with distance moved 4942 and scans 99
-2020-03-20 20:10:49 INFO  SwarmAgent:163 - Agent [r=92,g=156,b=237] returned to start Coord(x=20, y=20) with distance moved 4952 and scans 78
-2020-03-20 20:10:49 INFO  SwarmAgent:163 - Agent [r=249,g=41,b=23] returned to start Coord(x=20, y=20) with distance moved 5222 and scans 96
+4298 and scans 77
+4308 and scans 108
+4318 and scans 63
+4318 and scans 104
 
-local:
+5 agent:
+3592 and scans 49
+3636 and scans 92
+3756 and scans 59
+3810 and scans 79
+3840 and scans 86
+
+6 agent:
+3440 and scans 38
+3478 and scans 36
+3700 and scans 51
+3778 and scans 63
+3860 and scans 89
+3876 and scans 95
+
+
+local
 2 agent:
-2020-03-20 20:48:10 INFO  SwarmAgent:163 - Agent [r=110,g=63,b=68] returned to start Coord(x=20, y=20) with distance moved 11212 and scans 249
-2020-03-20 20:48:34 INFO  SwarmAgent:163 - Agent [r=227,g=184,b=10] returned to start Coord(x=20, y=20) with distance moved 12664 and scans 269
+10336 and scans 319
+10338 and scans 319
 
 3 agent:
-2020-03-20 21:03:59 INFO  SwarmAgent:163 - Agent [r=222,g=3,b=228] returned to start Coord(x=20, y=20) with distance moved 6054 and scans 118
-2020-03-20 21:07:47 INFO  SwarmAgent:163 - Agent [r=197,g=93,b=247] returned to start Coord(x=20, y=20) with distance moved 7368 and scans 185
-2020-03-20 21:08:20 INFO  SwarmAgent:163 - Agent [r=209,g=152,b=205] returned to start Coord(x=20, y=20) with distance moved 8622 and scans 160
-
-4 agent
-2020-03-20 21:28:32 INFO  SwarmAgent:163 - Agent [r=196,g=111,b=126] returned to start Coord(x=20, y=20) with distance moved 5488 and scans 117
-2020-03-20 21:28:32 INFO  SwarmAgent:163 - Agent [r=159,g=43,b=97] returned to start Coord(x=20, y=20) with distance moved 5510 and scans 97
-2020-03-20 21:28:33 INFO  SwarmAgent:163 - Agent [r=232,g=10,b=210] returned to start Coord(x=20, y=20) with distance moved 5660 and scans 117
-2020-03-20 21:28:33 INFO  SwarmAgent:163 - Agent [r=113,g=19,b=127] returned to start Coord(x=20, y=20) with distance moved 5972 and scans 94
-
-local with drops:
-2 agent:
-2020-03-22 17:41:07 INFO  SwarmAgent:183 - Agent [r=97,g=89,b=110] returned to start Coord(x=20, y=20) with distance moved 11468 and scans 157
-2020-03-22 17:41:18 INFO  SwarmAgent:183 - Agent [r=152,g=175,b=76] returned to start Coord(x=20, y=20) with distance moved 12196 and scans 197
-
-
-3 agent:
-2020-03-22 18:23:35 INFO  SwarmAgent:183 - Agent [r=145,g=81,b=69] returned to start Coord(x=20, y=20) with distance moved 11252 and scans 184
-2020-03-22 18:23:36 INFO  SwarmAgent:183 - Agent [r=163,g=79,b=109] returned to start Coord(x=20, y=20) with distance moved 11268 and scans 153
-2020-03-22 18:23:37 INFO  SwarmAgent:183 - Agent [r=32,g=186,b=20] returned to start Coord(x=20, y=20) with distance moved 11440 and scans 145
+6134 and scans 145
+6162 and scans 124
+6214 and scans 152
 
 4 agent:
-2020-03-22 19:13:44 INFO  SwarmAgent:183 - Agent [r=193,g=186,b=207] returned to start Coord(x=20, y=20) with distance moved 10126 and scans 105
-2020-03-22 19:13:45 INFO  SwarmAgent:183 - Agent [r=75,g=210,b=63] returned to start Coord(x=20, y=20) with distance moved 10210 and scans 72
-2020-03-22 19:13:45 INFO  SwarmAgent:183 - Agent [r=30,g=224,b=236] returned to start Coord(x=20, y=20) with distance moved 10216 and scans 90
-2020-03-22 19:13:46 INFO  SwarmAgent:183 - Agent [r=96,g=229,b=73] returned to start Coord(x=20, y=20) with distance moved 10546 and scans 136
+6340 and scans 148
+8868 and scans 179
+9084 and scans 216
+10224 and scans 245
 
+5 agent:
+5736 and scans 155
+6770 and scans 161
+6792 and scans 178
+6804 and scans 148
+10550 and scans 289
+
+6 agent:
+4644 and scans 101
+5870 and scans 102
+7058 and scans 142
+7678 and scans 126
+8106 and scans 139
+9306 and scans 222
+
+
+local drops
+2 agent:
+11826 and scans 274
+11840 and scans 291
+
+3 agent:
+7376 and scans 135
+7630 and scans 146
+7748 and scans 130
+
+
+4 agent:
+6434 and scans 109
+7850 and scans 144
+7876 and scans 134
+14720 and scans 255
+
+5 agent:
+4542 and scans 67
+4742 and scans 95
+8644 and scans 136
+8644 and scans 88
+12854 and scans 2009
+
+6 agent:
+6930 and scans 158
+6932 and scans 195
+6960 and scans 196
+7070 and scans 156
+8234 and scans 204
+8344 and scans 213

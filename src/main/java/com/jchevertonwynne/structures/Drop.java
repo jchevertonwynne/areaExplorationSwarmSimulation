@@ -5,6 +5,6 @@ import lombok.Value;
 
 @Value
 public class Drop {
-    private Coord coord;
-    private SwarmAgent agent;
+    Coord coord;
+    SwarmAgent agent;
 }

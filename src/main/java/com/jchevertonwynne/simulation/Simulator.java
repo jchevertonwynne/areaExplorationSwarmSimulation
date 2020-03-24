@@ -3,8 +3,6 @@ package com.jchevertonwynne.simulation;
 import com.jchevertonwynne.display.Displayable;
 import com.jchevertonwynne.pathing.PathMediator;
 import com.jchevertonwynne.structures.Coord;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.awt.Color;
 import java.awt.Graphics;
@@ -19,19 +17,18 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import static com.jchevertonwynne.utils.Common.ALL_KNOWN_PATH_COLOUR;
-import static com.jchevertonwynne.utils.Common.ALL_KNOWN_WALL_COLOUR;
 import static com.jchevertonwynne.utils.Common.DISTANCE_DISPLAY;
-import static com.jchevertonwynne.utils.Common.KNOWN_PATH_COLOUR;
-import static com.jchevertonwynne.utils.Common.KNOWN_WALL_COLOUR;
-import static com.jchevertonwynne.utils.Common.SOME_KNOWN_PATH_COLOUR;
-import static com.jchevertonwynne.utils.Common.SOME_KNOWN_WALL_COLOUR;
 import static com.jchevertonwynne.utils.Common.START_POSITION;
 import static java.lang.Math.min;
 import static java.util.stream.Collectors.toList;
 
 public class Simulator implements Displayable {
-    Logger logger = LoggerFactory.getLogger(Simulator.class);
+    private final int ALL_KNOWN_PATH_COLOUR = new Color(0, 255, 0).getRGB();
+    private final int ALL_KNOWN_WALL_COLOUR = new Color(255, 0, 0).getRGB();
+    private final int SOME_KNOWN_PATH_COLOUR = new Color(102, 153, 0).getRGB();
+    private final int SOME_KNOWN_WALL_COLOUR = new Color(200, 200, 0).getRGB();
+    private final int KNOWN_PATH_COLOUR = new Color(102, 102, 51).getRGB();
+    private final int KNOWN_WALL_COLOUR = new Color(255, 12, 127).getRGB();
 
     private static class AgentHandlerThread implements Runnable {
         private final SwarmAgent agent;
@@ -92,7 +89,7 @@ public class Simulator implements Displayable {
         List<Map<Coord, Boolean>> allWorlds = agents.stream().map(SwarmAgent::getWorld).collect(toList());
         allWorlds.forEach(world -> world.forEach((k, v) -> {
             seenCount.putIfAbsent(k, 0);
-            seenCount.compute(k, (coord, count) -> count + 1);
+            seenCount.computeIfPresent(k, (coord, count) -> count + 1);
         }));
         seenCount.forEach((coord, count) -> {
             if (count > 1) result.add(coord);
@@ -125,7 +122,6 @@ public class Simulator implements Displayable {
             for (SwarmAgent agent : agents) {
                 repathed |= agent.shareWithNeighbours(pathMediator);
             }
-            long start = System.currentTimeMillis();
             ExecutorService threadManager = Executors.newCachedThreadPool();
             agents.forEach(a -> threadManager.execute(new AgentHandlerThread(a)));
             threadManager.shutdown();

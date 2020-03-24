@@ -23,8 +23,8 @@ import static java.util.stream.Collectors.toSet;
 public class BoundarySearch {
     @Value
     private static class MoveHistory {
-        private @NonNull Coord lastTile;
-        private @NonNull Coord currentTile;
+        @NonNull Coord lastTile;
+        @NonNull Coord currentTile;
     }
 
     private Coord position;
@@ -36,7 +36,6 @@ public class BoundarySearch {
     private int turnsWithoutFind = 0;
     private List<Move> legalResults = new LinkedList<>();
     private List<Move> blacklistedResults = new LinkedList<>();
-
 
     private BoundarySearch(Coord position, Map<Coord, Boolean> world, Set<Coord> blacklist) {
         this.position = position;

@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.imageio.ImageIO;
+import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -15,10 +16,11 @@ import java.io.IOException;
 import static com.jchevertonwynne.utils.Common.AGENT_COUNT;
 import static com.jchevertonwynne.utils.Common.BACKGROUND_NAME;
 import static com.jchevertonwynne.utils.Common.DISPLAY;
-import static com.jchevertonwynne.utils.Common.PATH_COLOUR;
 
 public class Main {
 	private static Logger logger = LoggerFactory.getLogger(Main.class);
+
+	private static final int PATH_COLOUR = new Color(255, 255, 255).getRGB();
 
 	/**
 	 * Load array of pathable terrain from png file
@@ -67,5 +69,6 @@ public class Main {
 		} while (!simulator.complete());
 		logger.info("Simulation finished!");
 		System.out.println("Simulation finished!");
+		System.exit(0);
 	}
 }
