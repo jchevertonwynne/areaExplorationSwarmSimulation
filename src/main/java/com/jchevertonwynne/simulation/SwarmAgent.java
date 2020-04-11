@@ -30,6 +30,7 @@ import static com.jchevertonwynne.utils.CircleOperations.generateCircleRays;
 import static com.jchevertonwynne.utils.Common.EMPLOY_DROPS;
 import static com.jchevertonwynne.utils.Common.GLOBAL_KNOWLEDGE;
 import static com.jchevertonwynne.utils.Common.SIGHT_RADIUS;
+import static com.jchevertonwynne.utils.Common.UNIFORM_AGENT_COLOUR;
 import static java.lang.Math.exp;
 import static java.lang.Math.log;
 import static java.util.Collections.singleton;
@@ -388,7 +389,8 @@ public class SwarmAgent implements Displayable {
         graphics.setColor(Color.BLACK);
         graphics.drawOval(position.getX() - 4, position.getY() - 4, 8, 8);
         graphics.drawOval(position.getX() - 3, position.getY() - 3, 6, 6);
-        graphics.setColor(color);
+        Color displayColor = UNIFORM_AGENT_COLOUR ? Color.YELLOW : color;
+        graphics.setColor(displayColor);
         graphics.fillOval(position.getX() - 4, position.getY() - 4, 8, 8);
     }
 }
