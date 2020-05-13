@@ -3,10 +3,15 @@ package com.jchevertonwynne.simulation;
 import com.jchevertonwynne.display.Displayable;
 import com.jchevertonwynne.pathing.PathMediator;
 import com.jchevertonwynne.structures.Coord;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import javax.imageio.ImageIO;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -20,15 +25,20 @@ import java.util.concurrent.TimeUnit;
 import static com.jchevertonwynne.utils.Common.DISTANCE_DISPLAY;
 import static com.jchevertonwynne.utils.Common.START_POSITION;
 import static java.lang.Math.min;
+import static java.lang.String.format;
 import static java.util.stream.Collectors.toList;
 
 public class Simulator implements Displayable {
+    Logger logger = LoggerFactory.getLogger(Simulator.class);
+
     private final int ALL_KNOWN_PATH_COLOUR = new Color(0, 255, 0).getRGB();
     private final int ALL_KNOWN_WALL_COLOUR = new Color(255, 0, 0).getRGB();
     private final int SOME_KNOWN_PATH_COLOUR = new Color(102, 153, 0).getRGB();
     private final int SOME_KNOWN_WALL_COLOUR = new Color(200, 200, 0).getRGB();
     private final int KNOWN_PATH_COLOUR = new Color(102, 102, 51).getRGB();
     private final int KNOWN_WALL_COLOUR = new Color(255, 12, 127).getRGB();
+
+    private int imagesTaken;
 
     private static class AgentHandlerThread implements Runnable {
         private final SwarmAgent agent;
@@ -43,9 +53,26 @@ public class Simulator implements Displayable {
         }
     }
 
-    private ScannerFactory scannerFactory;
-    private Set<SwarmAgent> agents = new HashSet<>();
-    private Map<SwarmAgent, Integer> scans = new HashMap<>();
+    public void saveImage(BufferedImage image) {
+        String filename = complete()
+                ? "imageOutput/finished.png"
+                : format("imageOutput/output%04d.png", imagesTaken);
+        File output = new File(filename);
+
+        try {
+            ImageIO.write(image, "png", output);
+            logger.info("Image {} saved", output.getName());
+            if (!complete()) {
+                imagesTaken++;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private final ScannerFactory scannerFactory;
+    private final Set<SwarmAgent> agents = new HashSet<>();
+    private final Map<SwarmAgent, Integer> scans = new HashMap<>();
 
     public Simulator(int agentCount, Boolean[][] world) {
         scannerFactory = new ScannerFactory(world, agents);

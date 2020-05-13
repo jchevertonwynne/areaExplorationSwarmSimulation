@@ -4,7 +4,14 @@ import com.jchevertonwynne.structures.Coord;
 import lombok.NonNull;
 import lombok.Value;
 
-import java.util.*;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.PriorityQueue;
+import java.util.Set;
 
 import static com.jchevertonwynne.structures.Coord.CARDINAL_DIRECTIONS;
 import static java.lang.String.format;
@@ -14,13 +21,13 @@ import static java.util.stream.Collectors.toList;
 public class AStarPathing {
     @Value
     private static class AStarPathOption {
-        private double distanceEstimate;
-        private int actualDistance;
-        private @NonNull Coord tile;
-        private @NonNull LinkedList<Coord> history;
+        double distanceEstimate;
+        int actualDistance;
+        @NonNull Coord tile;
+        @NonNull LinkedList<Coord> history;
     }
 
-    private static Comparator<AStarPathOption> aStarOptionComparator = comparingDouble(aStarPathOption -> aStarPathOption.getActualDistance() + aStarPathOption.getDistanceEstimate());
+    private static final Comparator<AStarPathOption> aStarOptionComparator = comparingDouble(aStarPathOption -> aStarPathOption.getActualDistance() + aStarPathOption.getDistanceEstimate());
 
     /**
      * A* to path from current position to destination
@@ -44,9 +51,7 @@ public class AStarPathing {
             Optional<AStarPathOption> result = nextOptions.stream()
                     .filter(option -> option.getTile().equals(destination))
                     .findFirst();
-            if (result.isPresent()) {
-                return result.get().getHistory();
-            }
+            if (result.isPresent()) return result.get().getHistory();
             nextOptions.stream()
                     .filter(aStarPathOption -> !seen.contains(aStarPathOption.getTile()))
                     .forEach(aStarPathOption -> {

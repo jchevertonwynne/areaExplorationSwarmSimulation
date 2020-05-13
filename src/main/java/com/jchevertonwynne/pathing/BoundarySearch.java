@@ -27,15 +27,15 @@ public class BoundarySearch {
         @NonNull Coord currentTile;
     }
 
-    private Coord position;
-    private Map<Coord, Boolean> world;
-    private Set<Coord> blacklist;
-    private Set<Coord> resultTiles = new HashSet<>();
-    private Set<Coord> seen = new HashSet<>();
+    private final Coord position;
+    private final Map<Coord, Boolean> world;
+    private final Set<Coord> blacklist;
+    private final Set<Coord> resultTiles = new HashSet<>();
+    private final Set<Coord> seen = new HashSet<>();
     private int distance = 0;
     private int turnsWithoutFind = 0;
-    private List<Move> legalResults = new LinkedList<>();
-    private List<Move> blacklistedResults = new LinkedList<>();
+    private final List<Move> legalResults = new LinkedList<>();
+    private final List<Move> blacklistedResults = new LinkedList<>();
 
     private BoundarySearch(Coord position, Map<Coord, Boolean> world, Set<Coord> blacklist) {
         this.position = position;

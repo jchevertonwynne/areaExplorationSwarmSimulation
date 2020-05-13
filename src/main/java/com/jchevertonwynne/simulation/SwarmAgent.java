@@ -63,14 +63,14 @@ public class SwarmAgent implements Displayable {
     private int scansDone = 0;
     private boolean mediated;
 
-    private Map<Coord, Boolean> world = new HashMap<>();
-    private Map<Coord, Integer> distanceFromStart = new HashMap<>();
+    private final Map<Coord, Boolean> world = new HashMap<>();
+    private final Map<Coord, Integer> distanceFromStart = new HashMap<>();
     private LinkedList<Coord> currentPath = new LinkedList<>();
 
-    private Map<SwarmAgent, Set<Coord>> shareCache = new HashMap<>();
+    private final Map<SwarmAgent, Set<Coord>> shareCache = new HashMap<>();
 
-    private Set<Coord> blackList = new HashSet<>();
-    private Set<Coord> whiteList = new HashSet<>();
+    private final Set<Coord> blackList = new HashSet<>();
+    private final Set<Coord> whiteList = new HashSet<>();
 
     private BoundarySearchResult boundarySearchResult;
 

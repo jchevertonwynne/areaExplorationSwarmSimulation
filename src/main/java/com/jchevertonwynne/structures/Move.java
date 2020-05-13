@@ -5,6 +5,6 @@ import lombok.Value;
 
 @Value
 public class Move {
-    private @NonNull Coord tile;
-    private int distance;
+    @NonNull Coord tile;
+    int distance;
 }

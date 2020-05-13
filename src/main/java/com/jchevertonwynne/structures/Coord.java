@@ -8,8 +8,8 @@ import static java.lang.Math.pow;
 
 @Value
 public class Coord {
-    private int x;
-    private int y;
+    int x;
+    int y;
 
     public static List<Coord> CARDINAL_DIRECTIONS = List.of(
             new Coord(0, 1),

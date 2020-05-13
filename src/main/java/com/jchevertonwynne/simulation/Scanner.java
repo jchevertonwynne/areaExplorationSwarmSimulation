@@ -5,7 +5,6 @@ import com.jchevertonwynne.structures.Drop;
 import com.jchevertonwynne.structures.TileStatus;
 import com.jchevertonwynne.utils.CircleOperations;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -14,6 +13,7 @@ import static com.jchevertonwynne.utils.CircleOperations.generateCircleRays;
 import static com.jchevertonwynne.utils.Common.BROADCAST_RADIUS;
 import static com.jchevertonwynne.utils.Common.GLOBAL_KNOWLEDGE;
 import static com.jchevertonwynne.utils.Common.SIGHT_RADIUS;
+import static java.util.Collections.unmodifiableSet;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 
@@ -26,13 +26,13 @@ public class Scanner {
     public Scanner(Boolean[][] world, SwarmAgent agent, Set<SwarmAgent> otherAgents, List<Drop> drops) {
         this.world = world;
         this.agent = agent;
-        this.otherAgents = otherAgents;
+        this.otherAgents = unmodifiableSet(otherAgents);
         this.drops = drops;
     }
 
     public Set<SwarmAgent> getOtherLocalAgents() {
         if (GLOBAL_KNOWLEDGE) {
-            return new HashSet<>(otherAgents);
+            return otherAgents;
         }
         else {
             return otherAgents.stream()

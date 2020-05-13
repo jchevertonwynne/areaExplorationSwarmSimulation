@@ -5,6 +5,6 @@ import lombok.Value;
 
 @Value
 public class TileStatus {
-    private @NonNull Coord coord;
-    private boolean pathable;
+    @NonNull Coord coord;
+    boolean pathable;
 }

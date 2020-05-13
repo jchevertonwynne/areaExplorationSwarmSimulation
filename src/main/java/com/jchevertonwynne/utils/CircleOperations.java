@@ -17,9 +17,9 @@ import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 
 public class CircleOperations {
-    private static Hashtable<Integer, Set<Coord>> circleEdges = new Hashtable<>();
-    private static Hashtable<Coord, List<Coord>> centerRays = new Hashtable<>();
-    private static Hashtable<Integer, List<List<Coord>>> circleRays = new Hashtable<>();
+    private static final Hashtable<Integer, Set<Coord>> circleEdges = new Hashtable<>();
+    private static final Hashtable<Coord, List<Coord>> centerRays = new Hashtable<>();
+    private static final Hashtable<Integer, List<List<Coord>>> circleRays = new Hashtable<>();
 
     private static Set<Coord> calculateArc(int size) {
         Set<Coord> result = new HashSet<>();

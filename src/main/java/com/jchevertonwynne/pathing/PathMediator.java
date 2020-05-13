@@ -9,8 +9,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class PathMediator {
-    private static Logger logger = LoggerFactory.getLogger(PathMediator.class);
-    private Set<Integer> checked = new HashSet<>();
+    private static final Logger logger = LoggerFactory.getLogger(PathMediator.class);
+    private final Set<Integer> checked = new HashSet<>();
 
     public boolean mediate(SwarmAgent a, SwarmAgent b) {
         int combinedHash = a.hashCode() ^ b.hashCode();
